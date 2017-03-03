@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/LeadershipAndMotivation/LeadershipAndMotivation.iml" filepath="$PROJECT_DIR$/LeadershipAndMotivation/LeadershipAndMotivation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mjapps.iml" filepath="$PROJECT_DIR$/mjapps.iml" />
+    </modules>
+  </component>
+</project>

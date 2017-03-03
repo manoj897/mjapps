@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.inmobi.manojkrishnan.LeadershipAndMotivation">
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/leadershiplogo"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.inmobi.manojkrishnan.LeadershipAndMotivation.MainActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".LeadershipAndMotivation"
+            android:label="@string/title_activity_all_in_one_motivation"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+        <activity android:name=".utils.BlogShowCaseActivity" >
+        </activity>
+
+        <receiver android:name="com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.AlaramReceiver"
+                  android:enabled="true"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".utils.DownloadImageService"/>
+
+
+        <!--<provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.mj.LeadershipandMotivation.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>-->
+        <meta-data
+            android:name="com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.Setup"
+            android:value="GlideModule" />
+
+    </application>
+
+</manifest>

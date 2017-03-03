@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Leadership and Motivation</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_per_day_quotes">PerDayQuotes</string>
+    <string name="title_activity_all_in_one_motivation">Leadership and Motivation</string>
+    <string name="dummy_section_text">Coming Soon!</string>
+    <string name="title_activity_permission">permissionActivity</string>
+</resources>
