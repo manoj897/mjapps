@@ -8,6 +8,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -25,6 +27,7 @@ public class AlaramReceiver extends BroadcastReceiver {
     private NotificationManager notificationManager;
     private PendingIntent pendingIntent;
     private KeyValueStore mKeyValueStore;
+    private KeyValueStore mKeyValueStoreBitMap;
     @Override
     public void onReceive(Context context, Intent intent) {
         // TODO Auto-generated method stub
@@ -55,36 +58,76 @@ public class AlaramReceiver extends BroadcastReceiver {
 */
 
 
-
+/*
             if( (intent.getExtras() != null) && (intent.getExtras().get("intentFromAlarmManager") != null)){
                 //if image downloaded then
                 //  show Notification
+                //  Reset the CacheImageforSecondDay
                 //else
-                // increment the counter and Show Notification
+                //  increment the counter
+                //  Download image
+                //  and Show Notification
+                //  Reset the CacheImageforSecondDay
+                //put in preference that dailyRoutine trigerred
             }else{
-                //check if it is connected
-                //if image downloaded then
-                // do nothing
-                //else
-                // increment the counter and download the image only
+
+                //  If (Connected)
+                //     if image downloaded then
+                //        do nothing
+                //      else
+                //          Increment the counter
+                //          Download the image
+                //          set the CacheImageforSecondDay
+                //  else
+                //      Do Nothing
+            }*/
+
+        Log.d("alarm","====Broadcast Received=====");
+        mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
+        mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "ImageBitMap");
+
+        Intent msgIntent = new Intent(context, DownloadImageService.class);
+        if( (intent.getExtras() != null) && (intent.getExtras().get("intentFromAlarmManager") != null)) {
+            //Increment the counter
+            Log.d("BroadCastReceiver","Intent from AlarmManager");
+            if(mKeyValueStore.getInt("counter",0) == 0) {
+                mKeyValueStore.putInt("counter", 1);
+                mKeyValueStore.putLong("timeStamp", System.currentTimeMillis());
+            }
+            else if(mKeyValueStore.getInt("counter",0) > 0) {
+                mKeyValueStore.putInt("counter", mKeyValueStore.getInt("counter", 0) + 1);
             }
 
 
-        Log.d("alarm","====Broadcast Received=====");
-
-        mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
-        if(mKeyValueStore.getInt("counter",0) == 0) {
-            mKeyValueStore.putInt("counter", 1);
-            mKeyValueStore.putLong("timeStamp", System.currentTimeMillis());
+            if(mKeyValueStoreBitMap.getBoolean("ImageBitMapCached",false))
+                msgIntent.putExtra("CacheImageForSecondDay","true");
+            else
+                msgIntent.putExtra("CacheImageForSecondDay","false");
+            msgIntent.putExtra("DailyRoutine","true");
+            msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
+            context.startService(msgIntent);
+        }else {
+            Log.d("BroadCastReceiver","Connectivity change");
+            boolean isServiceEnabled = false;
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                if (activeNetwork != null && activeNetwork.isConnected()) {
+                    isServiceEnabled = true;
+                }
+            }
+            if(isServiceEnabled) {
+                Log.d("BroadCastReceiver", "Caching the second day Image");
+                if (mKeyValueStoreBitMap.getBoolean("ImageBitMapCached", false))
+                    msgIntent.putExtra("CacheImageForSecondDay", "true");
+                else
+                    msgIntent.putExtra("CacheImageForSecondDay", "false");
+                msgIntent.putExtra("DailyRoutine", "false");
+                msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + (mKeyValueStore.getInt("counter", 1) + 1) + ".jpg");
+                context.startService(msgIntent);
+            }
         }
-        else if(mKeyValueStore.getInt("counter",0) > 0) {
-            mKeyValueStore.putInt("counter", mKeyValueStore.getInt("counter", 0) + 1);
-        }
 
-        //IntentService intentService = new DownloadImageService("downloadImage","http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
-        Intent msgIntent = new Intent(context, DownloadImageService.class);
-        msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
-        context.startService(msgIntent);
 
 
 

@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.stetho.Stetho;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkHandler;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkResponse;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkUtils;
@@ -55,6 +56,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        Stetho.initializeWithDefaults(this);
 
 //        img = (ImageView)findViewById(R.id.testImage);
 
@@ -96,8 +98,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         Calendar calendar = Calendar.getInstance();
 
 
-        calendar.set(Calendar.HOUR_OF_DAY, 16);
-        calendar.set(Calendar.MINUTE,18);
+        calendar.set(Calendar.HOUR_OF_DAY, 00);
+        calendar.set(Calendar.MINUTE,31);
         calendar.set(Calendar.SECOND, 00);
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 60 * 60 * 1000, mpendingIntent);
 

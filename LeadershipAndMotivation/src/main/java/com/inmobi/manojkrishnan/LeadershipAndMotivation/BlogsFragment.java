@@ -74,10 +74,12 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
 
         mKeyValueStore4BlogsInit = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "BlogsInit");
         if(!mKeyValueStore4BlogsInit.getBoolean("init",false)){
+            Log.d("Blogs","Fetching from Network======");
             AsyncTaskRunner runner = new AsyncTaskRunner();
             String sleepTime = "few";
             runner.execute(sleepTime);
         }else {
+            Log.d("Blogs","Using cached value======");
             Parser.parseBlogGrammar(mKeyValueStore4BlogsInit.getString("blogsGrammar",null));
             mFeedItems = FeedDataBlogs.generateFeedItems();
             mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems);
@@ -298,16 +300,10 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             publishProgress("Sleeping..."); // Calls onProgressUpdate()
             try {
 
-                mKeyValueStore = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "QuotesCounter");
-                if(mKeyValueStore.getInt("counter",0) == 0) {
-                    mKeyValueStore.putInt("counter", 1);
-                    Log.d("Grammar", "count when first time " + mKeyValueStore.getInt("counter", 1));
-                }
-
                 NetworkHandler hdlr = new NetworkHandler();
-                mResponse = hdlr.connect("http://motivationpics.s3-ap-southeast-1.amazonaws.com/grammar/wallpapergrammar.txt");
+                mResponse = hdlr.connect("http://motivationpics.s3-ap-southeast-1.amazonaws.com/grammar/blogsGrammar.txt");
                 if(mResponse != null) {
-                    Parser.parseWallpaperGrammar(BlogsFragment.this.getContext(),mResponse.getResponse(), mKeyValueStore.getInt("counter", 1));
+                    Parser.parseBlogGrammar(mResponse.getResponse());
                     resp = "success";
                 }
 

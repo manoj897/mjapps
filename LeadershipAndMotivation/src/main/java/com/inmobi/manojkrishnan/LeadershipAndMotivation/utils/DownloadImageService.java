@@ -42,6 +42,8 @@ public class DownloadImageService extends IntentService {
      * @param name Used to name the worker thread, important only for debugging.
      */
     private String imgUrl;
+    private String dailyRoutine;
+    private String cacheImageForSecondDay;
     private Context ctxt;
     private KeyValueStore mKeyValueStore;
     private static final int NOTIFICATION_ID = 1;
@@ -57,63 +59,100 @@ public class DownloadImageService extends IntentService {
         Log.d("testIntentService","service started");
         ctxt = this;
         imgUrl = intent.getStringExtra("imageUrl");
+        dailyRoutine = intent.getStringExtra("DailyRoutine");
+        cacheImageForSecondDay = intent.getStringExtra("CacheImageForSecondDay");
         Log.d("testIntentService","image Url is"+imgUrl);
+        Log.d("testIntentService","DailyRoutine is"+dailyRoutine);
         mKeyValueStore = KeyValueStore.getInstance(this.getApplicationContext(), "ImageBitMap");
 
-        Log.d("testIntentService","Loading the image");
-        FutureTarget<Bitmap> target= Glide.with(this.getApplicationContext())
-                .load(imgUrl)
-                .asBitmap()
-                .diskCacheStrategy(DiskCacheStrategy.RESULT)
-                .override(500, 400).priority(Priority.IMMEDIATE)
-                .into(500,400);
-        Bitmap bitmap = null;
-        try {
-            bitmap  = target.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        if(dailyRoutine.equalsIgnoreCase("false")) {
+            Bitmap bitmap = null;
+            if (cacheImageForSecondDay.equalsIgnoreCase("false")) {
+                Log.d("testIntentService", "Loading the image");
+                FutureTarget<Bitmap> target = Glide.with(this.getApplicationContext())
+                        .load(imgUrl)
+                        .asBitmap()
+                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .override(500, 400).priority(Priority.IMMEDIATE)
+                        .into(500, 400);
+                bitmap = null;
+                try {
+                    bitmap = target.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                Log.d("testIntentService", "Image Ready");
+                saveImageToInternalStorage(bitmap);
+                mKeyValueStore.putBoolean("available", true);
+            }
+            else
+                Log.d("testIntentService", "Image already downloaded");
+        }else {
+
+            Bitmap bitmap = null;
+            if (cacheImageForSecondDay.equalsIgnoreCase("false")) {
+                Log.d("testIntentService", "Loading the image");
+                FutureTarget<Bitmap> target = Glide.with(this.getApplicationContext())
+                        .load(imgUrl)
+                        .asBitmap()
+                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .override(500, 400).priority(Priority.IMMEDIATE)
+                        .into(500, 400);
+                bitmap = null;
+                try {
+                    bitmap = target.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                Log.d("testIntentService", "Image Ready");
+                saveImageToInternalStorage(bitmap);
+                mKeyValueStore.putBoolean("available", true);
+            }else
+                Log.d("testIntentService", "Image already downloaded");
+
+
+            Log.d("testIntentService", "Showing Notification");
+            if (Build.VERSION.SDK_INT < LOLLIPOP) {
+                Context mcontext = ctxt.getApplicationContext();
+                notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+                Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+                pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
+                builder.setContentTitle("Quote for the Day");
+                builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
+                builder.setSmallIcon(R.drawable.leadershiplogo);
+                builder.setContentIntent(pendingIntent);
+                builder.setAutoCancel(true);
+
+                notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+                notificationManager.notify(NOTIFICATION_ID, builder.build());
+                mKeyValueStore.putBoolean("ImageBitMapCached", false);
+                Log.d("alarm", "====Notification sent=====");
+            } else {
+                Context mcontext = ctxt.getApplicationContext();
+                notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+                Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+                pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
+                builder.setContentTitle("Quote for the Day");
+                builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
+                int color = 0xff123456;
+                builder.setColor(color);
+                builder.setSmallIcon(R.drawable.logonotification);
+                builder.setContentIntent(pendingIntent);
+                builder.setAutoCancel(true);
+
+                notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+                notificationManager.notify(NOTIFICATION_ID, builder.build());
+                mKeyValueStore.putBoolean("ImageBitMapCached", false);
+                Log.d("alarm", "====Notification sent=====");
+            }
+
         }
-        Log.d("testIntentService","Image Ready");
-        saveImageToInternalStorage(bitmap);
-        mKeyValueStore.putBoolean("available",true);
-        if(Build.VERSION.SDK_INT < LOLLIPOP) {
-            Context mcontext = ctxt.getApplicationContext();
-            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-            Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
-            pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
-            builder.setContentTitle("Quote for the Day");
-            builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
-            builder.setSmallIcon(R.drawable.leadershiplogo);
-            builder.setContentIntent(pendingIntent);
-            builder.setAutoCancel(true);
-
-            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
-            Log.d("alarm", "====Notification sent=====");
-        }
-        else{
-            Context mcontext = ctxt.getApplicationContext();
-            notificationManager = (NotificationManager)mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-            Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
-            pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
-            builder.setContentTitle("Quote for the Day");
-            builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
-            int color = 0xff123456;
-            builder.setColor(color);
-            builder.setSmallIcon(R.drawable.logonotification);
-            builder.setContentIntent(pendingIntent);
-            builder.setAutoCancel(true);
-
-            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
-            Log.d("alarm", "====Notification sent=====");
-        }
-
-
 
     }
 
@@ -122,10 +161,13 @@ public class DownloadImageService extends IntentService {
             FileOutputStream fos = ctxt.openFileOutput("QuotesCounter.png", ctxt.MODE_PRIVATE);
             image.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
+            if(dailyRoutine.equalsIgnoreCase("false"))
+                mKeyValueStore.putBoolean("ImageBitMapCached",true);
             Log.d("testIntentService","BitMap stored in file");
             return true;
         } catch (Exception e) {
             Log.e("saveToInternalStorage()", e.getMessage());
+            mKeyValueStore.putBoolean("ImageBitMapCached",false);
             return false;
         }
     }

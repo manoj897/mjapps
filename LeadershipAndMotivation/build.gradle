@@ -35,5 +35,6 @@ dependencies {
     compile 'com.github.ugurtekbas:fadingIndicator:623a5c62ff'
     compile 'com.github.bumptech.glide:okhttp-integration:1.4.0@aar'
     compile 'com.squareup.okhttp:okhttp:2.2.0'
+    compile 'com.facebook.stetho:stetho:1.4.2'
 
 }

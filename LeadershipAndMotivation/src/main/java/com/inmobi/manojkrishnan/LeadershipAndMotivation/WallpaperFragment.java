@@ -86,10 +86,12 @@ public class WallpaperFragment extends ListFragment {
         }
         mKeyValueStore4WallpaperInit = KeyValueStore.getInstance(WallpaperFragment.this.getContext().getApplicationContext(), "WallpaperInit");
         if(!mKeyValueStore4WallpaperInit.getBoolean("init",false) && (null == mKeyValueStore4WallpaperInit.getString("wallpaperGrammar",null))){
+            Log.d("Wallpaper","Fetching from network======");
             AsyncTaskRunner runner = new AsyncTaskRunner();
             String sleepTime = "few";
             runner.execute(sleepTime);
         } else {
+            Log.d("Wallpaper","Using cached value======");
             mKeyValueStore = KeyValueStore.getInstance(WallpaperFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
             if(mKeyValueStore.getInt("counter",0) == 0) {
                 mKeyValueStore.putInt("counter", 1);
