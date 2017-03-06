@@ -29,7 +29,8 @@
             android:label="@string/title_activity_all_in_one_motivation"
             android:theme="@style/AppTheme.NoActionBar" >
         </activity>
-        <activity android:name=".utils.BlogShowCaseActivity" >
+        <activity android:name=".utils.BlogShowCaseActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
         <receiver android:name="com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.AlaramReceiver"

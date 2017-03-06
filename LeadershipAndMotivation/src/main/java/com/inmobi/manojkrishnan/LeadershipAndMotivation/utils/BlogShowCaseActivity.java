@@ -2,7 +2,9 @@ package com.inmobi.manojkrishnan.LeadershipAndMotivation.utils;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,13 +27,23 @@ private TextView mTextView;
         mTextView = (TextView)findViewById(R.id.txtView);
         mImageView = (ImageView)findViewById(R.id.imgView);
         mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
+
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        CollapsingToolbarLayout ctl = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        ctl.setTitle("DreamBlogs !!");
+
         Intent i = getIntent();
         blogData blogData = (blogData)i.getSerializableExtra("BlogItem");
         //mTextView.setText(blogData.getContent());
         final String blogContentUrl = blogData.getContent();
+
         //Picasso.with(this).load(blogData.getImage()).resize(300,300).into(mImageView);
         Glide.with(this.getApplicationContext())
-                .load(blogData.getImage()).thumbnail(0.2f).diskCacheStrategy(DiskCacheStrategy.SOURCE).override(500,400)
+                .load(blogData.getImage()).thumbnail(0.2f).diskCacheStrategy(DiskCacheStrategy.SOURCE).override(500,550)
                 .into(mImageView);
 
 
