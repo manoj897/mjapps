@@ -80,7 +80,7 @@ public class WallpaperFragment extends ListFragment {
         super.onActivityCreated(savedInstanceState);
 
         if (!NetworkUtils.isNetworkAvailable(WallpaperFragment.this.getActivity())) {
-            Toast.makeText(WallpaperFragment.this.getActivity(), "Please connect to network and launch again",
+            Toast.makeText(WallpaperFragment.this.getActivity(), "Please connect to network and launch again - wallpaper",
                     Toast.LENGTH_LONG).show();
             return;
         }

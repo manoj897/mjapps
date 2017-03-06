@@ -55,24 +55,20 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         View view = inflater.inflate(R.layout.fragment_section_blogs, container, false);
         mContainer = (ViewGroup) view.findViewById(R.id.container);
         mGridView = (GridView) view.findViewById(R.id.gridview);
-
-        if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
-            Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network and launch again",
-                    Toast.LENGTH_LONG).show();
-            return view;
-        }
         return view;
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        mKeyValueStore4BlogsInit = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "BlogsInit");
         super.onActivityCreated(savedInstanceState);
         if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
-            Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network and launch again",
-                    Toast.LENGTH_LONG).show();
-            return ;
+            if(!mKeyValueStore4BlogsInit.getBoolean("init",false)) {
+                Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network and launch again - Blogs",
+                        Toast.LENGTH_LONG).show();
+                return ;
+            }
         }
 
-        mKeyValueStore4BlogsInit = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "BlogsInit");
         if(!mKeyValueStore4BlogsInit.getBoolean("init",false)){
             Log.d("Blogs","Fetching from Network======");
             AsyncTaskRunner runner = new AsyncTaskRunner();
@@ -301,7 +297,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             try {
 
                 NetworkHandler hdlr = new NetworkHandler();
-                mResponse = hdlr.connect("http://motivationpics.s3-ap-southeast-1.amazonaws.com/grammar/blogsGrammar.txt");
+                mResponse = hdlr.connect("http://motivationblogs.s3-ap-southeast-1.amazonaws.com/blogsGrammar.txt");
                 if(mResponse != null) {
                     Parser.parseBlogGrammar(mResponse.getResponse());
                     resp = "success";

@@ -66,15 +66,19 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
         mContainer = (ViewGroup) view.findViewById(R.id.container);
         mImageContainer = (ImageView) view.findViewById(R.id.Quote_image);
         mShare = (ImageView) view.findViewById(R.id.share);
-
+        mKeyValueStore = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
+        mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "ImageBitMap");
+        //ToDo - Show offline images for QuotesCounter
         if (!NetworkUtils.isNetworkAvailable(QuotesFragment.this.getActivity())) {
-            Toast.makeText(QuotesFragment.this.getActivity(), "Please connect to network and launch again",
-                    Toast.LENGTH_LONG).show();
-            mShare.setVisibility(View.INVISIBLE);
-            return view;
+            if(!mKeyValueStoreImage.getBoolean("available",false)) {//If file is not present in Cache
+                Toast.makeText(QuotesFragment.this.getActivity(), "Please connect to network and launch again Quotes",
+                        Toast.LENGTH_LONG).show();
+                mShare.setVisibility(View.INVISIBLE);
+                return view;
+            }
         }
 
-        mKeyValueStore = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
+
         if (mKeyValueStore.getInt("counter", 0) == 0) {
             mKeyValueStore.putInt("counter", 1);
             Log.d("QuotesFragment", "count when first time " + mKeyValueStore.getInt("counter", 1));
@@ -85,12 +89,13 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
 //        new ShareTask(this.getContext()).execute("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + "8" + ".jpg");
 
-        mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "ImageBitMap");
-        if(!mKeyValueStoreImage.getBoolean("avaialable",false)) {//If file is not present in Cache
+
+        if(!mKeyValueStoreImage.getBoolean("available",false)) {//If file is not present in Cache
             SimpleTarget target2 = new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
                     mImageContainer.setImageBitmap(bitmap);
+                    mKeyValueStoreImage.getBoolean("available",true);
                 }
             };
 
@@ -100,6 +105,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
                     .diskCacheStrategy(DiskCacheStrategy.RESULT)
                     .override(500, 400).priority(Priority.IMMEDIATE)
                     .into(target2);
+
 
         }else {//If File is present in cache
             Bitmap thumbnail = null;

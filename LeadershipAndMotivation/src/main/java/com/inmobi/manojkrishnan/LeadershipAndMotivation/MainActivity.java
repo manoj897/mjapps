@@ -38,7 +38,8 @@ import java.util.Calendar;
 public class MainActivity extends FragmentActivity implements View.OnClickListener {
 
     private HttpURLConnection mHttpUrlConnection;
-    private NetworkResponse mResponse;
+    private NetworkResponse mBlogResponse;
+    private NetworkResponse mWallPaperResponse;
     private volatile static Picasso sPicasso;
     private ImageView img;
     IntroductionPagerAdapter mIntroductionPagerAdapter;
@@ -84,11 +85,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         Button btn = (Button)findViewById(R.id.startOffTitle);
         btn.setOnClickListener(this);
 
+
+
         if (!NetworkUtils.isNetworkAvailable(this)) {
-            Toast.makeText(MainActivity.this, "Please exit and connect to network to get started",
-                    Toast.LENGTH_SHORT).show();
-            mintialize = false;
-            return;
+            if(!isAllModuleInitialized()) {
+                Toast.makeText(MainActivity.this, "Please exit and connect to network to get started",
+                        Toast.LENGTH_SHORT).show();
+                mintialize = false;
+                return;
+            }
         }
 
         AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -98,8 +103,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         Calendar calendar = Calendar.getInstance();
 
 
-        calendar.set(Calendar.HOUR_OF_DAY, 00);
-        calendar.set(Calendar.MINUTE,31);
+        calendar.set(Calendar.HOUR_OF_DAY, 02);
+        calendar.set(Calendar.MINUTE,30);
         calendar.set(Calendar.SECOND, 00);
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 60 * 60 * 1000, mpendingIntent);
 
@@ -122,13 +127,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 @Override
                 public void run() {
                     NetworkHandler hdlr = new NetworkHandler();
-                    mResponse = hdlr.connect("http://motivationblogs.s3-ap-southeast-1.amazonaws.com/blogsGrammar.txt");
-                    if (mResponse != null) {
+                    mBlogResponse = hdlr.connect("http://motivationblogs.s3-ap-southeast-1.amazonaws.com/blogsGrammar.txt");
+                    if (mBlogResponse != null) {
                         Log.d("testParsing", "Going to parse blogs");
-                        Parser.parseBlogGrammar(mResponse.getResponse());
+                        Parser.parseBlogGrammar(mBlogResponse.getResponse());
                         mBlogintialize = true;
                         mKeyValueStore4BlogsInit.putBoolean("init",true);
-                        mKeyValueStore4BlogsInit.putString("blogsGrammar",mResponse.getResponse());
+                        mKeyValueStore4BlogsInit.putString("blogsGrammar",mBlogResponse.getResponse());
                     } else {
                         Log.d("testParsing", "Response is null");
                         mBlogintialize = false;
@@ -156,11 +161,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 @Override
                 public void run() {
                     NetworkHandler hdlr = new NetworkHandler();
-                    mResponse = hdlr.connect("http://motivationpics.s3-ap-southeast-1.amazonaws.com/grammar/wallpapergrammar.txt");
-                    if (mResponse != null) {
-                        Parser.parseWallpaperGrammar(MainActivity.this, mResponse.getResponse(), mKeyValueStore.getInt("counter", 1));
+                    mWallPaperResponse = hdlr.connect("http://motivationpics.s3-ap-southeast-1.amazonaws.com/grammar/wallpapergrammar.txt");
+                    if (mWallPaperResponse != null) {
+                        Parser.parseWallpaperGrammar(MainActivity.this, mWallPaperResponse.getResponse(), mKeyValueStore.getInt("counter", 1));
                         mKeyValueStore4WallpaperInit.putBoolean("init",true);
-                        mKeyValueStore4WallpaperInit.putString("wallpaperGrammar",mResponse.getResponse());
+                        mKeyValueStore4WallpaperInit.putString("wallpaperGrammar",mWallPaperResponse.getResponse());
                         mWallpaperintialize = true;
                     } else {
                         mKeyValueStore4WallpaperInit.putBoolean("init",false);
@@ -175,13 +180,35 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
 
 
+    private boolean isAllModuleInitialized() {
+        boolean flag = false;
+
+        mKeyValueStore4BlogsInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "BlogsInit");
+        if(mKeyValueStore4BlogsInit.getBoolean("init",false) &&
+                (null != mKeyValueStore4BlogsInit.getString("blogsGrammar",null)))
+            flag  = true;
+        else
+            flag  = false;
+
+        mKeyValueStore4WallpaperInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "WallpaperInit");
+        if(mKeyValueStore4WallpaperInit.getBoolean("init",false) &&
+                (null != mKeyValueStore4WallpaperInit.getString("wallpaperGrammar",null)))
+            flag = true;
+        else
+            flag = false;
+
+        return flag;
+
+    }
 
     @Override
     public void onClick(View v) {
         if (!NetworkUtils.isNetworkAvailable(this)) {
-            Toast.makeText(MainActivity.this, "Please exit and connect to network to get started",
-                    Toast.LENGTH_SHORT).show();
-            return;
+            if(!mBlogintialize && !mWallpaperintialize) {
+                Toast.makeText(MainActivity.this, "Please exit and connect to network to get started",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
         if(mintialize && mBlogintialize && mWallpaperintialize) {
             Intent inst = new Intent(this, LeadershipAndMotivation.class);
