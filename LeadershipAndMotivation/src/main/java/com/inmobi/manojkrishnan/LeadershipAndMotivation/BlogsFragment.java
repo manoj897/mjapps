@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,20 +43,25 @@ import java.util.ArrayList;
  */
 public class BlogsFragment  extends android.support.v4.app.Fragment {
     private ViewGroup mContainer;
-    private BaseAdapter mFeedAdapter;
+    private  FeedItemAdapter mFeedAdapter;
     private GridView mGridView;
     private ArrayList<FeedDataBlogs.FeedItem> mFeedItems;
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStore4BlogsInit;
     private static NetworkResponse mResponse;
+    private RecyclerView mRecycleView;
+    View.OnClickListener clickListener;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_section_blogs, container, false);
-        mContainer = (ViewGroup) view.findViewById(R.id.container);
-        mGridView = (GridView) view.findViewById(R.id.gridview);
+        View view = inflater.inflate(R.layout.layout_recycler_view, container, false);
+        mRecycleView = (RecyclerView) view.findViewById(R.id.cardList);
+        mRecycleView.setHasFixedSize(true);
+        LinearLayoutManager llm = new LinearLayoutManager(this.getContext());
+        llm.setOrientation(LinearLayoutManager.VERTICAL);
+        mRecycleView.setLayoutManager(llm);
         return view;
     }
     @Override
@@ -79,8 +86,10 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             Parser.parseBlogGrammar(mKeyValueStore4BlogsInit.getString("blogsGrammar",null));
             mFeedItems = FeedDataBlogs.generateFeedItems();
             mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems);
-            mGridView.setAdapter(mFeedAdapter);
-            mGridView.setOnItemClickListener(mItemClickListener);
+            /*mGridView.setAdapter(mFeedAdapter);
+            mGridView.setOnItemClickListener(mItemClickListener);*/
+            mRecycleView.setAdapter(mFeedAdapter);
+            clickListener = new mItemClickListener();
         }
 
     }
@@ -117,7 +126,67 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
 
     }
 
-    private class FeedItemAdapter extends ArrayAdapter<FeedDataBlogs.FeedItem> {
+
+
+    public class FeedItemAdapter extends RecyclerView.Adapter<FeedItemAdapter.FeedItemHolder> {
+        private Context context;
+        private ArrayList<FeedDataBlogs .FeedItem> users;
+
+        public FeedItemAdapter(Context context, ArrayList<FeedDataBlogs.FeedItem> users) {
+            super();
+            this.context = context;
+            this.users = users;
+        }
+
+        @Override
+        public FeedItemAdapter.FeedItemHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View itemView = LayoutInflater.
+                    from(parent.getContext()).
+                    inflate(R.layout.content_blog, parent, false);
+            itemView.setOnClickListener(clickListener);
+            return new FeedItemHolder(itemView);
+        }
+
+        @Override
+        public void onBindViewHolder(FeedItemAdapter.FeedItemHolder holder, int position) {
+            FeedDataBlogs .FeedItem feed = users.get(position);
+            TextView textViewName = holder.title;
+            ImageView imageView = holder.big_image;
+            TextView textViewReadMore = holder.readMore;
+            textViewReadMore.setText("Read More...");
+
+            textViewName.setText(feed.gettitle());
+            if(position == 1)
+                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
+                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150).priority(Priority.IMMEDIATE)
+                        .into(imageView);
+            else
+                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
+                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150)
+                        .into(imageView);
+
+        }
+
+        @Override
+        public int getItemCount() {
+            return users.size();
+        }
+
+        public class FeedItemHolder extends RecyclerView.ViewHolder {
+            protected ImageView big_image;
+            protected TextView title;
+            protected TextView readMore;
+
+            public FeedItemHolder(View v) {
+                super(v);
+                big_image = (ImageView) v.findViewById(R.id.big_image);
+                title = (TextView) v.findViewById(R.id.blogtitle);
+                readMore = (TextView) v.findViewById(R.id.ReadMore);
+            }
+        }
+    }
+
+   /* private class FeedItemAdapter extends ArrayAdapter<FeedDataBlogs.FeedItem> {
         private Context context;
         private ArrayList<FeedDataBlogs .FeedItem> users;
         private LayoutInflater layoutInflater;
@@ -184,8 +253,8 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
 
 
     }
-
-    private AdapterView.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
+*/
+   /* private FeedItemAdapter1.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position,
@@ -208,9 +277,31 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             }
 
         }
-    };
+    };*/
 
+    private class mItemClickListener implements View.OnClickListener{
 
+        @Override
+        public void onClick(View v) {
+            Log.d("testBlog","Inside the Click listener");
+            try {
+                if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
+                    Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network to Read the full blog!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                int position = mRecycleView.getChildLayoutPosition(v);
+                FeedDataBlogs.FeedItem inst = mFeedItems.get(position);
+                blogData data = new blogData(inst.getContent(),inst.getBigImage());
+                Intent intentBlog = new Intent(BlogsFragment.this.getActivity(), BlogShowCaseActivity.class);
+                intentBlog.putExtra("BlogItem", data);
+                startActivity(intentBlog);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 
 
@@ -318,8 +409,10 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             if(result.equalsIgnoreCase("success")) {
                 mFeedItems = FeedDataBlogs.generateFeedItems();
                 mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems);
-                mGridView.setAdapter(mFeedAdapter);
-                mGridView.setOnItemClickListener(mItemClickListener);
+                mRecycleView.setAdapter(mFeedAdapter);
+                if(clickListener != null)
+                    clickListener =  new mItemClickListener();
+                mRecycleView.setOnClickListener(clickListener);
                 mKeyValueStore4BlogsInit.putBoolean("init", true);
                 mKeyValueStore4BlogsInit.putString("blogsGrammar",mResponse.getResponse());
             }
