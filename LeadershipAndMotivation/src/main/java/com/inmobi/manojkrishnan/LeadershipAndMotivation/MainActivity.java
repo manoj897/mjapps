@@ -103,8 +103,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         Calendar calendar = Calendar.getInstance();
 
 
-        calendar.set(Calendar.HOUR_OF_DAY, 02);
-        calendar.set(Calendar.MINUTE,30);
+        calendar.set(Calendar.HOUR_OF_DAY, 9);
+        calendar.set(Calendar.MINUTE,00);
         calendar.set(Calendar.SECOND, 00);
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 60 * 60 * 1000, mpendingIntent);
 
