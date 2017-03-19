@@ -24,6 +24,7 @@ import com.inmobi.manojkrishnan.LeadershipAndMotivation.QuotesFragment;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.R;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
@@ -61,9 +62,10 @@ public class DownloadImageService extends IntentService {
         imgUrl = intent.getStringExtra("imageUrl");
         dailyRoutine = intent.getStringExtra("DailyRoutine");
         cacheImageForSecondDay = intent.getStringExtra("CacheImageForSecondDay");
-        Log.d("testIntentService","image Url is"+imgUrl);
-        Log.d("testIntentService","DailyRoutine is"+dailyRoutine);
-        mKeyValueStore = KeyValueStore.getInstance(this.getApplicationContext(), "ImageBitMap");
+        Log.d("testIntentService","image Url is "+imgUrl);
+        Log.d("testIntentService","DailyRoutine is "+dailyRoutine);
+        Log.d("testIntentService","cacheImageForSecondDay is "+cacheImageForSecondDay);
+        mKeyValueStore = KeyValueStore.getInstance(this.getApplicationContext(), "Routine");
 
         if(dailyRoutine.equalsIgnoreCase("false")) {
             Bitmap bitmap = null;
@@ -83,17 +85,14 @@ public class DownloadImageService extends IntentService {
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                Log.d("testIntentService", "Image Ready");
-                saveImageToInternalStorage(bitmap);
-                mKeyValueStore.putBoolean("available", true);
+                Log.d("testIntentService", "Image Ready for second Day");
+                saveImageToInternalStorage(bitmap,false);
             }
             else
-                Log.d("testIntentService", "Image already downloaded");
+                Log.d("testIntentService", "Image for Next Day routine already downloaded");
         }else {
-
             Bitmap bitmap = null;
-            if (cacheImageForSecondDay.equalsIgnoreCase("false")) {
-                Log.d("testIntentService", "Loading the image");
+                /*Log.d("testIntentService", "Loading the image");
                 FutureTarget<Bitmap> target = Glide.with(this.getApplicationContext())
                         .load(imgUrl)
                         .asBitmap()
@@ -109,10 +108,40 @@ public class DownloadImageService extends IntentService {
                     e.printStackTrace();
                 }
                 Log.d("testIntentService", "Image Ready");
-                saveImageToInternalStorage(bitmap);
-                mKeyValueStore.putBoolean("available", true);
-            }else
-                Log.d("testIntentService", "Image already downloaded");
+                saveImageToInternalStorage(bitmap,true);
+            */
+                if(mKeyValueStore.getBoolean("NextRoutineCached",false)) {
+                    Log.d("testIntentService", "Image already downloaded");
+                    //Todo - File swap from nextDayRoutine to dailyRoutine
+                    Log.d("testIntentService", "swapping the image to dailyRoutine");
+                    Bitmap dailyRoutineBitMap = null;
+                    try {
+                        File filepath = getFileStreamPath("nextDayRoutine.png");
+                        dailyRoutineBitMap = BitmapFactory.decodeFile(filepath.getAbsolutePath());
+                        saveImageToInternalStorage(dailyRoutineBitMap, true);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }else {
+                    Log.d("testIntentService", "Loading the image for DailyRoutine");
+                    FutureTarget<Bitmap> target = Glide.with(this.getApplicationContext())
+                        .load(imgUrl)
+                        .asBitmap()
+                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .override(500, 400).priority(Priority.IMMEDIATE)
+                        .into(500, 400);
+                    bitmap = null;
+                    try {
+                        bitmap = target.get();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d("testIntentService", "Daily Routine Image Downloaded");
+                    saveImageToInternalStorage(bitmap,true);
+                }
+
 
 
             Log.d("testIntentService", "Showing Notification");
@@ -130,7 +159,9 @@ public class DownloadImageService extends IntentService {
 
                 notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
                 notificationManager.notify(NOTIFICATION_ID, builder.build());
-                mKeyValueStore.putBoolean("ImageBitMapCached", false);
+                mKeyValueStore.putBoolean("availableDailyRoutine", true);
+                mKeyValueStore.putBoolean("NextRoutineCached", false);
+
                 Log.d("alarm", "====Notification sent=====");
             } else {
                 Context mcontext = ctxt.getApplicationContext();
@@ -148,7 +179,8 @@ public class DownloadImageService extends IntentService {
 
                 notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
                 notificationManager.notify(NOTIFICATION_ID, builder.build());
-                mKeyValueStore.putBoolean("ImageBitMapCached", false);
+                mKeyValueStore.putBoolean("availableDailyRoutine", true);
+                mKeyValueStore.putBoolean("NextRoutineCached", false);
                 Log.d("alarm", "====Notification sent=====");
             }
 
@@ -156,18 +188,27 @@ public class DownloadImageService extends IntentService {
 
     }
 
-    public boolean saveImageToInternalStorage(Bitmap image) {
+    public boolean saveImageToInternalStorage(Bitmap image,boolean dailyRoutine) {
         try {
-            FileOutputStream fos = ctxt.openFileOutput("QuotesCounter.png", ctxt.MODE_PRIVATE);
+            FileOutputStream fos = null;
+            if(dailyRoutine)
+                fos = ctxt.openFileOutput("dailyRoutine.png", ctxt.MODE_PRIVATE);
+            else
+                fos = ctxt.openFileOutput("nextDayRoutine.png", ctxt.MODE_PRIVATE);
+
             image.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
-            if(dailyRoutine.equalsIgnoreCase("false"))
-                mKeyValueStore.putBoolean("ImageBitMapCached",true);
+            if(dailyRoutine)
+                mKeyValueStore.putBoolean("DailyRoutineCached",true);
+            else
+                mKeyValueStore.putBoolean("NextRoutineCached",true);
             Log.d("testIntentService","BitMap stored in file");
             return true;
         } catch (Exception e) {
             Log.e("saveToInternalStorage()", e.getMessage());
-            mKeyValueStore.putBoolean("ImageBitMapCached",false);
+            mKeyValueStore.putBoolean("NextRoutineCached",false);
+            mKeyValueStore.putBoolean("DailyRoutineCached",false);
+
             return false;
         }
     }

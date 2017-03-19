@@ -31,11 +31,17 @@ import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkHandler;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkResponse;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkUtils;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.BlogShowCaseActivity;
+import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.DownloadBlogsImageService;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.KeyValueStore;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.Parser;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.blogData;
 import com.squareup.picasso.Picasso;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 /**
@@ -51,6 +57,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
     private static NetworkResponse mResponse;
     private RecyclerView mRecycleView;
     View.OnClickListener clickListener;
+    private ArrayList<Bitmap> mBitMap;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,15 +88,79 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             AsyncTaskRunner runner = new AsyncTaskRunner();
             String sleepTime = "few";
             runner.execute(sleepTime);
+            //Todo - cache the network data into file instead of preference
+
         }else {
             Log.d("Blogs","Using cached value======");
             Parser.parseBlogGrammar(mKeyValueStore4BlogsInit.getString("blogsGrammar",null));
             mFeedItems = FeedDataBlogs.generateFeedItems();
-            mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems);
-            /*mGridView.setAdapter(mFeedAdapter);
-            mGridView.setOnItemClickListener(mItemClickListener);*/
-            mRecycleView.setAdapter(mFeedAdapter);
-            clickListener = new mItemClickListener();
+            //Download Blog Images parallely
+            boolean didBlogImagesDownloaded = false;
+            try {
+                File filePath = BlogsFragment.this.getContext().getFileStreamPath("blogspicsdownloaded.txt");
+                FileInputStream fi = new FileInputStream(filePath);
+                if ( fi != null ) {
+                    InputStreamReader inputStreamReader = new InputStreamReader(fi);
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                    String receiveString = "";
+                    StringBuilder stringBuilder = new StringBuilder();
+                    while ( (receiveString = bufferedReader.readLine()) != null ) {
+                        stringBuilder.append(receiveString);
+                    }
+                    fi.close();
+                    didBlogImagesDownloaded = Boolean.valueOf(stringBuilder.toString());
+                    Log.d("Blogs","shouldDownloadBlogsImages returned"+ didBlogImagesDownloaded);
+                }
+                fi.close();
+            } catch (Exception ex) {
+                Log.e("failed to read blogspicsdownloaded file", ex.getMessage());
+            }
+            if(!didBlogImagesDownloaded){
+                Log.d("Blogs","Downloading Images parallely======");
+                ArrayList<FeedDataBlogs.FeedItem> users = mFeedItems;
+                String imgUrl = null;
+                int i=-1;
+                for (FeedDataBlogs.FeedItem user:
+                        users) {
+                    i++;
+                    imgUrl = user.getThumbnail();
+                    Intent downloadBlogsImageServiceIntent = new Intent(BlogsFragment.this.getContext(), DownloadBlogsImageService.class);
+                    downloadBlogsImageServiceIntent.putExtra("blogImagesCounter",i);
+                    downloadBlogsImageServiceIntent.putExtra("blogImageUrl",imgUrl);
+                    BlogsFragment.this.getContext().startService(downloadBlogsImageServiceIntent);
+                }
+                Intent downloadBlogsImageServiceIntent = new Intent(BlogsFragment.this.getContext(), DownloadBlogsImageService.class);
+                downloadBlogsImageServiceIntent.putExtra("complete",true);
+                BlogsFragment.this.getContext().startService(downloadBlogsImageServiceIntent);
+                mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems,false);
+                mRecycleView.setAdapter(mFeedAdapter);
+                clickListener = new mItemClickListener();
+            }else {
+                Log.d("Blogs","Using Downloading Images======");
+                Bitmap thumbnail = null;
+                int i =0;
+                mBitMap = new ArrayList<>();
+                for (i=0;i<mFeedItems.size();i++) {
+                    try {
+                        File filePath = BlogsFragment.this.getContext().getFileStreamPath("blogspics"+i+".png");
+                        FileInputStream fi = new FileInputStream(filePath);
+                        thumbnail = BitmapFactory.decodeStream(fi);
+                        mBitMap.add(thumbnail);
+                        fi.close();
+                        Log.d("Blogs","Downloaded Images populated======");
+                    } catch (Exception ex) {
+                        Log.e("getThumbnail() on internal storage", ex.getMessage());
+                    }
+                }
+
+                mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems,true);
+                mRecycleView.setAdapter(mFeedAdapter);
+                clickListener = new mItemClickListener();
+            }
+
+
+
+            //Start downloading images
         }
 
     }
@@ -130,12 +201,14 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
 
     public class FeedItemAdapter extends RecyclerView.Adapter<FeedItemAdapter.FeedItemHolder> {
         private Context context;
-        private ArrayList<FeedDataBlogs .FeedItem> users;
+        private ArrayList<FeedDataBlogs.FeedItem> users;
+        private boolean useCachedImage;
 
-        public FeedItemAdapter(Context context, ArrayList<FeedDataBlogs.FeedItem> users) {
+        public FeedItemAdapter(Context context, ArrayList<FeedDataBlogs.FeedItem> users,boolean shouldUseCachedImages) {
             super();
             this.context = context;
             this.users = users;
+            this.useCachedImage = shouldUseCachedImages;
         }
 
         @Override
@@ -154,16 +227,26 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             ImageView imageView = holder.big_image;
             TextView textViewReadMore = holder.readMore;
             textViewReadMore.setText("Read More...");
-
             textViewName.setText(feed.gettitle());
-            if(position == 1)
-                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
-                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150).priority(Priority.IMMEDIATE)
-                        .into(imageView);
-            else
-                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
-                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150)
-                        .into(imageView);
+
+            if(useCachedImage){
+                Bitmap thumbnail = null;
+                try {
+                    imageView.setImageBitmap(mBitMap.get(position));
+                } catch (Exception ex) {
+                    Log.e("getThumbnail() on internal storage", ex.getMessage());
+                }
+            }else{
+                if(position == 1)
+                    Glide.with(BlogsFragment.this.getContext().getApplicationContext())
+                            .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150).priority(Priority.IMMEDIATE)
+                            .into(imageView);
+                else
+                    Glide.with(BlogsFragment.this.getContext().getApplicationContext())
+                            .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(250,150)
+                            .into(imageView);
+            }
+
 
         }
 
@@ -186,98 +269,6 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         }
     }
 
-   /* private class FeedItemAdapter extends ArrayAdapter<FeedDataBlogs.FeedItem> {
-        private Context context;
-        private ArrayList<FeedDataBlogs .FeedItem> users;
-        private LayoutInflater layoutInflater;
-
-        class ContentViewHolder {
-            TextView title;
-            TextView content;
-            ImageView thumb_image;
-            ImageView big_image;
-            //ImageView bottom_img;
-        }
-
-        public FeedItemAdapter(Context context, ArrayList<FeedDataBlogs.FeedItem> users) {
-            super(context, R.layout.listitem, R.id.title, users);
-            this.context = context;
-            this.users = users;
-            this.layoutInflater = LayoutInflater.from(context);
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return 1;
-        }
-
-        @Override
-        public int getCount() {
-            return users.size();
-        }
-
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View rowView = convertView;
-            if (null == rowView) {
-                rowView = layoutInflater.inflate(R.layout.content_blog, parent, false);
-                ContentViewHolder viewHolder = new ContentViewHolder();
-                viewHolder.big_image = (ImageView) rowView.findViewById(R.id.big_image);
-                viewHolder.title = (TextView) rowView.findViewById(R.id.blogtitle);
-                rowView.setTag(viewHolder);
-
-                Log.d("test", "RowView is null=============");
-            } else
-                Log.d("test", "RowView is not null");
-
-
-            FeedDataBlogs .FeedItem feed = users.get(position);
-            ContentViewHolder holder = (ContentViewHolder) rowView.getTag();
-            //Picasso.with(BlogsFragment.this.getContext()).load(feed.getThumbnail()).resize(200,200).into(holder.big_image);
-            if(position == 1)
-                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
-                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(150,100).priority(Priority.IMMEDIATE)
-                        .into(holder.big_image);
-            else
-                Glide.with(BlogsFragment.this.getContext().getApplicationContext())
-                        .load(feed.getThumbnail()).diskCacheStrategy(DiskCacheStrategy.ALL).crossFade().override(150,100)
-                        .into(holder.big_image);
-
-            holder.title.setText(feed.gettitle());
-
-            return rowView;
-
-
-        }
-
-
-    }
-*/
-   /* private FeedItemAdapter1.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
-
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position,
-                                long id) {
-            Log.d("testBlog","Inside the Click listener");
-            try {
-                if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
-                    Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network to Read the full blog!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                FeedDataBlogs.FeedItem inst = mFeedItems.get(position);
-                blogData data = new blogData(inst.getContent(),inst.getBigImage());
-                Intent intentBlog = new Intent(BlogsFragment.this.getActivity(), BlogShowCaseActivity.class);
-                intentBlog.putExtra("BlogItem", data);
-                startActivity(intentBlog);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    };*/
 
     private class mItemClickListener implements View.OnClickListener{
 
@@ -285,16 +276,19 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         public void onClick(View v) {
             Log.d("testBlog","Inside the Click listener");
             try {
-                if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
+                /*if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
                     Toast.makeText(BlogsFragment.this.getActivity(), "Please connect to network to Read the full blog!", Toast.LENGTH_SHORT).show();
                     return;
-                }
+                }*/
 
                 int position = mRecycleView.getChildLayoutPosition(v);
                 FeedDataBlogs.FeedItem inst = mFeedItems.get(position);
                 blogData data = new blogData(inst.getContent(),inst.getBigImage());
                 Intent intentBlog = new Intent(BlogsFragment.this.getActivity(), BlogShowCaseActivity.class);
                 intentBlog.putExtra("BlogItem", data);
+                intentBlog.putExtra("BlogImage", "blogspics"+position+".png");
+                intentBlog.putExtra("BlogContent", "blogscontent"+position+".txt");
+                intentBlog.putExtra("BlogTitle",inst.gettitle());
                 startActivity(intentBlog);
 
             } catch (Exception e) {
@@ -307,7 +301,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
 
 
 
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    /*public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -328,12 +322,12 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         Log.d("LOG LOG", "" + reqWidth+" "+reqHeight+" "+width+" "+height+" "+inSampleSize);
 
         return inSampleSize;
-    }
+    }*/
 
 
 
 
-    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight) {
+   /* public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight) {
 
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
@@ -346,9 +340,9 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeResource(res, resId, options);
-    }
+    }*/
 
-    private class LongOperation extends AsyncTask<MyTaskParams, Void, Bitmap> {
+    /*private class LongOperation extends AsyncTask<MyTaskParams, Void, Bitmap> {
         ImageView imgView;
 
         public LongOperation(ImageView imgView) {
@@ -374,7 +368,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
         @Override
         protected void onProgressUpdate(Void... values) {
         }
-    }
+    }*/
 
 
     private class AsyncTaskRunner extends AsyncTask<String, String, String> {
@@ -408,13 +402,52 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
             progressDialog.dismiss();
             if(result.equalsIgnoreCase("success")) {
                 mFeedItems = FeedDataBlogs.generateFeedItems();
-                mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems);
+                mFeedAdapter = new FeedItemAdapter(getActivity(), mFeedItems,false);
                 mRecycleView.setAdapter(mFeedAdapter);
                 if(clickListener != null)
                     clickListener =  new mItemClickListener();
                 mRecycleView.setOnClickListener(clickListener);
                 mKeyValueStore4BlogsInit.putBoolean("init", true);
                 mKeyValueStore4BlogsInit.putString("blogsGrammar",mResponse.getResponse());
+                //Download all the blogsImages
+                boolean didBlogImagesDownloaded = false;
+                /*try {
+                    File filePath = BlogsFragment.this.getContext().getFileStreamPath("blogspicsdownloaded.txt");
+                    FileInputStream fi = new FileInputStream(filePath);
+                    if ( fi != null ) {
+                        InputStreamReader inputStreamReader = new InputStreamReader(fi);
+                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                        String receiveString = "";
+                        StringBuilder stringBuilder = new StringBuilder();
+                        while ( (receiveString = bufferedReader.readLine()) != null ) {
+                            stringBuilder.append(receiveString);
+                        }
+                        fi.close();
+                        shouldDownloadBlogsImages = Boolean.valueOf(stringBuilder.toString());
+                    }
+                    fi.close();
+                } catch (Exception ex) {
+                    Log.e("failed to read blogspicsdownloaded file", ex.getMessage());
+                }*/
+                if(didBlogImagesDownloaded) {
+                    Log.d("Blogs","Downloading Images parallely======");
+                    ArrayList<FeedDataBlogs.FeedItem> users = mFeedItems;
+                    String imgUrl = null;
+                    int i = -1;
+                    for (FeedDataBlogs.FeedItem user :
+                            users) {
+                        i++;
+                        imgUrl = user.getThumbnail();
+                        Intent downloagBlogsImageServiceIntent = new Intent(BlogsFragment.this.getContext(), DownloadBlogsImageService.class);
+                        downloagBlogsImageServiceIntent.putExtra("blogImagesCounter", i);
+                        downloagBlogsImageServiceIntent.putExtra("blogImageUrl", imgUrl);
+                        BlogsFragment.this.getContext().startService(downloagBlogsImageServiceIntent);
+                    }
+                    Intent downloadBlogsImageServiceIntent = new Intent(BlogsFragment.this.getContext(), DownloadBlogsImageService.class);
+                    downloadBlogsImageServiceIntent.putExtra("complete", true);
+                    BlogsFragment.this.getContext().startService(downloadBlogsImageServiceIntent);
+                }
+
             }
             else
                 mKeyValueStore4BlogsInit.putBoolean("init",false);

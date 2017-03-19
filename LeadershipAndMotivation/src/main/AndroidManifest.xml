@@ -42,6 +42,7 @@
         </receiver>
 
         <service android:name=".utils.DownloadImageService"/>
+        <service android:name=".utils.DownloadBlogsImageService"/>
 
 
         <!--<provider

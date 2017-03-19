@@ -84,7 +84,7 @@ public class AlaramReceiver extends BroadcastReceiver {
 
         Log.d("alarm","====Broadcast Received=====");
         mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
-        mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "ImageBitMap");
+        mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "Routine");
 
         Intent msgIntent = new Intent(context, DownloadImageService.class);
         if( (intent.getExtras() != null) && (intent.getExtras().get("intentFromAlarmManager") != null)) {
@@ -98,11 +98,7 @@ public class AlaramReceiver extends BroadcastReceiver {
                 mKeyValueStore.putInt("counter", mKeyValueStore.getInt("counter", 0) + 1);
             }
 
-
-            if(mKeyValueStoreBitMap.getBoolean("ImageBitMapCached",false))
-                msgIntent.putExtra("CacheImageForSecondDay","true");
-            else
-                msgIntent.putExtra("CacheImageForSecondDay","false");
+            msgIntent.putExtra("CacheImageForSecondDay","false");
             msgIntent.putExtra("DailyRoutine","true");
             msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
             context.startService(msgIntent);
@@ -118,7 +114,7 @@ public class AlaramReceiver extends BroadcastReceiver {
             }
             if(isServiceEnabled) {
                 Log.d("BroadCastReceiver", "Caching the second day Image");
-                if (mKeyValueStoreBitMap.getBoolean("ImageBitMapCached", false))
+                if (mKeyValueStoreBitMap.getBoolean("NextRoutineCached", false))
                     msgIntent.putExtra("CacheImageForSecondDay", "true");
                 else
                     msgIntent.putExtra("CacheImageForSecondDay", "false");

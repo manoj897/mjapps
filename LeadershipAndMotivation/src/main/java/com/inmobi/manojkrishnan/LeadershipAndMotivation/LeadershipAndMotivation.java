@@ -83,15 +83,15 @@ public class LeadershipAndMotivation extends AppCompatActivity {
 
     private static class PagerAdapter extends FragmentStatePagerAdapter {
 
-        private static final int NUM_TABS = 4;
+        private static final int NUM_TABS = 3;
 
         private static final int POSITION_QUOTE_FOR_THE_DAY = 0;
 
-        private static final int POSITION_WALLPAPERS = 1;
+        private static final int POSITION_WALLPAPERS = 3;
 
-        private static final int POSITION_BLOGS = 2;
+        private static final int POSITION_BLOGS = 1;
 
-        private static final int POSITION_ABOUT_ME = 3;
+        private static final int POSITION_ABOUT_ME = 2;
 
 
 

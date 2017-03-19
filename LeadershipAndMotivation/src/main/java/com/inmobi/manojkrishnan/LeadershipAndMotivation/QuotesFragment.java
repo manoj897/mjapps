@@ -62,22 +62,22 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+
         View view = inflater.inflate(R.layout.fragment_section_quotes, container, false);
         mContainer = (ViewGroup) view.findViewById(R.id.container);
         mImageContainer = (ImageView) view.findViewById(R.id.Quote_image);
         mShare = (ImageView) view.findViewById(R.id.share);
         mKeyValueStore = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
-        mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "ImageBitMap");
+        mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "Routine");
         //ToDo - Show offline images for QuotesCounter
         if (!NetworkUtils.isNetworkAvailable(QuotesFragment.this.getActivity())) {
-            if(!mKeyValueStoreImage.getBoolean("available",false)) {//If file is not present in Cache
+            if(!mKeyValueStoreImage.getBoolean("availableDailyRoutine",false)) {//If file is not present in Cache
                 Toast.makeText(QuotesFragment.this.getActivity(), "Please connect to network and launch again Quotes",
                         Toast.LENGTH_LONG).show();
                 mShare.setVisibility(View.INVISIBLE);
                 return view;
             }
         }
-
 
         if (mKeyValueStore.getInt("counter", 0) == 0) {
             mKeyValueStore.putInt("counter", 1);
@@ -90,19 +90,19 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 //        new ShareTask(this.getContext()).execute("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + "8" + ".jpg");
 
 
-        if(!mKeyValueStoreImage.getBoolean("available",false)) {//If file is not present in Cache
+        if(!mKeyValueStoreImage.getBoolean("DailyRoutineCached",false)) {//If file is not present in Cache
             SimpleTarget target2 = new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
                     mImageContainer.setImageBitmap(bitmap);
-                    mKeyValueStoreImage.getBoolean("available",true);
+                    mKeyValueStoreImage.getBoolean("availableDailyRoutine",true);
                 }
             };
 
             Glide.with(this.getContext().getApplicationContext())
                     .load("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg")
                     .asBitmap()
-                    .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .override(500, 400).priority(Priority.IMMEDIATE)
                     .into(target2);
 
@@ -110,10 +110,11 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
         }else {//If File is present in cache
             Bitmap thumbnail = null;
             try {
-                File filePath = this.getContext().getFileStreamPath("QuotesCounter.png");
+                File filePath = this.getContext().getFileStreamPath("dailyRoutine.png");
                 FileInputStream fi = new FileInputStream(filePath);
                 thumbnail = BitmapFactory.decodeStream(fi);
                 mImageContainer.setImageBitmap(thumbnail);
+                fi.close();
             } catch (Exception ex) {
                 Log.e("getThumbnail() on internal storage", ex.getMessage());
             }

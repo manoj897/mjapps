@@ -23,8 +23,8 @@ public class Setup implements GlideModule {
     }
     @Override public void registerComponents(Context context, Glide glide) {
         OkHttpClient client = new OkHttpClient();
-        client.setConnectTimeout(60, TimeUnit.SECONDS);
-        client.setReadTimeout(60, TimeUnit.SECONDS);
+        client.setConnectTimeout(120, TimeUnit.SECONDS);
+        client.setReadTimeout(120, TimeUnit.SECONDS);
         glide.register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(client));
     }
 

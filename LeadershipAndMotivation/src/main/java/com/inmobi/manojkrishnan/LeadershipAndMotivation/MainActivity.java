@@ -96,18 +96,22 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             }
         }
 
-        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-        Intent myIntent = new Intent(MainActivity.this , AlaramReceiver.class);
-        myIntent.putExtra("intentFromAlarmManager",true);
-        mpendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, myIntent, 0);
-        Calendar calendar = Calendar.getInstance();
+        mKeyValueStore = KeyValueStore.getInstance(this.getApplicationContext(), "DailyRoutine");
+        if (!mKeyValueStore.getBoolean("flag", false)) {
+            Log.d("MainActivity","DailyRoutine settings in progress");
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            Intent myIntent = new Intent(MainActivity.this, AlaramReceiver.class);
+            myIntent.putExtra("intentFromAlarmManager", true);
+            mpendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, myIntent, 0);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, 9);
 
-
-        calendar.set(Calendar.HOUR_OF_DAY, 9);
-        calendar.set(Calendar.MINUTE,00);
-        calendar.set(Calendar.SECOND, 00);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 60 * 60 * 1000, mpendingIntent);
-
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, mpendingIntent);
+            mKeyValueStore.putBoolean("flag",true);
+        }else{
+            Log.d("MainActivity","DailyRoutine Notification set already");
+        }
 
 
         mKeyValueStore = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "QuotesCounter");
