@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -19,8 +21,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -40,9 +47,12 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
+import static com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.ContextHolder.getApplicationContext;
 
 /**
  * Created by manoj.krishnan on 5/24/16.
@@ -56,7 +66,10 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStoreImage;
     private ProgressBar mProgressBar;
+    private Bitmap quotesBitMap = null;
     Uri uri;
+    private ImageView mDownload;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -67,6 +80,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
         mContainer = (ViewGroup) view.findViewById(R.id.container);
         mImageContainer = (ImageView) view.findViewById(R.id.Quote_image);
         mShare = (ImageView) view.findViewById(R.id.share);
+        mDownload = (ImageView) view.findViewById(R.id.download);
         mKeyValueStore = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
         mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "Routine");
         //ToDo - Show offline images for QuotesCounter
@@ -95,7 +109,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
                 @Override
                 public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
                     mImageContainer.setImageBitmap(bitmap);
-                    mKeyValueStoreImage.getBoolean("availableDailyRoutine",true);
+                    mKeyValueStoreImage.putBoolean("availableDailyRoutine",true);
                 }
             };
 
@@ -108,12 +122,13 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
 
         }else {//If File is present in cache
-            Bitmap thumbnail = null;
+            quotesBitMap = null;
             try {
                 File filePath = this.getContext().getFileStreamPath("dailyRoutine.png");
                 FileInputStream fi = new FileInputStream(filePath);
-                thumbnail = BitmapFactory.decodeStream(fi);
-                mImageContainer.setImageBitmap(thumbnail);
+                quotesBitMap = BitmapFactory.decodeStream(fi);
+                mImageContainer.setImageBitmap(quotesBitMap);
+                mKeyValueStoreImage.putBoolean("availableDailyRoutine",true);
                 fi.close();
             } catch (Exception ex) {
                 Log.e("getThumbnail() on internal storage", ex.getMessage());
@@ -123,8 +138,10 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
 
         mShare.setVisibility(View.VISIBLE);
+        mDownload.setVisibility(View.VISIBLE);
         mImageContainer.setScaleType(ImageView.ScaleType.FIT_XY);
         mShare.setOnClickListener(this);
+        mDownload.setOnClickListener(this);
         return view;
 
     }
@@ -145,16 +162,18 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
     public void onClick(View v) {
         Log.d("testintent", "onCLick received");
         int i = v.getId();
+        Animation animFadein = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
+        v.startAnimation(animFadein);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!checkPermission()) {
+                requestPermission();
+                return;
+            }
+
+        }
         switch (i) {
+
             case R.id.share:
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!checkPermission()) {
-                        requestPermission();
-                    }
-
-                }
-
                 // Get access to the URI for the bitmap
                 Uri bmpUri = getLocalBitmapUri(mImageContainer);
                /* if (bmpUri != null) {*/
@@ -170,6 +189,34 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
                /* }else
                     Log.d("test","bmpUri is  null===");*/
                 break;
+            case R.id.download:
+                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() ,"/Leadership And Motivation/");
+                if(!dir.exists())
+                    dir.mkdirs();
+                File file = new File(dir,"Quotes_" + System.currentTimeMillis() + ".png");
+                FileOutputStream out = null;
+                try {
+                    out = new FileOutputStream(file);
+                    quotesBitMap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.close();
+                    Toast.makeText(QuotesFragment.this.getActivity(), "Quotes Downloaded successfully", Toast.LENGTH_LONG).show();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                MediaScannerConnection.scanFile(QuotesFragment.this.getActivity(),
+                        new String[] { file.toString() }, null,
+                        new MediaScannerConnection.OnScanCompletedListener() {
+                            public void onScanCompleted(String path, Uri uri) {
+                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                Log.i("ExternalStorage", "-> uri=" + uri);
+                            }
+                        });
+                break;
+
 
         }
     }
@@ -185,7 +232,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
     private void requestPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(QuotesFragment.this.getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Toast.makeText(QuotesFragment.this.getActivity(), "Write permission allows us to share data. Please allow in App Settings for additional functionality.", Toast.LENGTH_LONG).show();
+            Toast.makeText(QuotesFragment.this.getActivity(), "Write permission will enable sharing and downloading data for you. Please allow in App Settings for additional functionality.", Toast.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(QuotesFragment.this.getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
         }
@@ -222,7 +269,11 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
             // Use methods on Context to access package-specific directories on external storage.
             // This way, you don't need to request external read/write permission.
             // See https://youtu.be/5xVh-7ywKpE?t=25m25s
-            File file = new File(Environment.getExternalStorageDirectory() + File.separator + "share_image_" + System.currentTimeMillis() + ".png");
+            //File file = new File(Environment.getExternalStorageDirectory() + File.separator + "share_image_" + System.currentTimeMillis() + ".png");
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() ,"/Leadership And Motivation/");
+            if(!dir.exists())
+                dir.mkdirs();
+            File file = new File(dir,"share_image_" + System.currentTimeMillis() + ".png");
             FileOutputStream out = new FileOutputStream(file);
             bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
             out.close();

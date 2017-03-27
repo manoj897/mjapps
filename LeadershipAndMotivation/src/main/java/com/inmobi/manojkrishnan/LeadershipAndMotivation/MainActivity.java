@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.PagerAdapter;
@@ -105,9 +106,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             mpendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY, 9);
-
-            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, mpendingIntent);
+            calendar.set(Calendar.HOUR_OF_DAY,07);
+            calendar.set(Calendar.MINUTE, 00);
+            calendar.set(Calendar.SECOND, 00);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+            else
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
             mKeyValueStore.putBoolean("flag",true);
         }else{
             Log.d("MainActivity","DailyRoutine Notification set already");

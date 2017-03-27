@@ -1,5 +1,6 @@
 package com.inmobi.manojkrishnan.LeadershipAndMotivation.utils;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -20,6 +21,9 @@ import com.inmobi.manojkrishnan.LeadershipAndMotivation.LeadershipAndMotivation;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.MainActivity;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.R;
 
+import java.util.Calendar;
+
+import static android.content.Context.ALARM_SERVICE;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 
 public class AlaramReceiver extends BroadcastReceiver {
@@ -28,6 +32,7 @@ public class AlaramReceiver extends BroadcastReceiver {
     private PendingIntent pendingIntent;
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStoreBitMap;
+    private PendingIntent mpendingIntent;
     @Override
     public void onReceive(Context context, Intent intent) {
         // TODO Auto-generated method stub
@@ -83,6 +88,23 @@ public class AlaramReceiver extends BroadcastReceiver {
             }*/
 
         Log.d("alarm","====Broadcast Received=====");
+        if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+            Log.d("alarm","====Notifications scheduled after reboot of Device=====");
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+            Intent myIntent = new Intent(context.getApplicationContext(), AlaramReceiver.class);
+            myIntent.putExtra("intentFromAlarmManager", true);
+            mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY,07);
+            calendar.set(Calendar.MINUTE, 00);
+            calendar.set(Calendar.SECOND, 00);
+            long dayDelay = 24*60*60*1000;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+calendar.getTimeInMillis(), mpendingIntent);
+            else
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+        }
         mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
         mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "Routine");
 
