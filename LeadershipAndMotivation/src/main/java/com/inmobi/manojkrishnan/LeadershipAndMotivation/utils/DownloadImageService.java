@@ -180,6 +180,7 @@ public class DownloadImageService extends IntentService {
                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                 Intent myIntent = new Intent(ctxt.getApplicationContext(), AlaramReceiver.class);
                 myIntent.putExtra("intentFromAlarmManager", true);
+                myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 mpendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, myIntent, 0);
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(System.currentTimeMillis());

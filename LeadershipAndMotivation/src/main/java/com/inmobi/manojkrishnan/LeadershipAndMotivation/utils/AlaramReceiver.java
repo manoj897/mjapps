@@ -88,20 +88,20 @@ public class AlaramReceiver extends BroadcastReceiver {
             }*/
 
         Log.d("alarm","====Broadcast Received=====");
-        if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+        if ((intent.getExtras() != null) && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
             Log.d("alarm","====Notifications scheduled after reboot of Device=====");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
             Intent myIntent = new Intent(context.getApplicationContext(), AlaramReceiver.class);
             myIntent.putExtra("intentFromAlarmManager", true);
+            myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
             calendar.set(Calendar.HOUR_OF_DAY,07);
             calendar.set(Calendar.MINUTE, 00);
             calendar.set(Calendar.SECOND, 00);
-            long dayDelay = 24*60*60*1000;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+calendar.getTimeInMillis(), mpendingIntent);
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
             else
                 alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
         }
@@ -124,7 +124,7 @@ public class AlaramReceiver extends BroadcastReceiver {
             msgIntent.putExtra("DailyRoutine","true");
             msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
             context.startService(msgIntent);
-        }else {
+        }else if((intent.getExtras() != null) && intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE")){
             Log.d("BroadCastReceiver","Connectivity change");
             boolean isServiceEnabled = false;
             ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
