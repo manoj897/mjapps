@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -14,16 +16,29 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.KeyValueStore;
+
+import java.io.File;
+import java.io.FileInputStream;
 
 
 public class LeadershipAndMotivation extends AppCompatActivity {
     PendingIntent mpendingIntent;
+    private KeyValueStore mKeyValueStoreImage;
+    private KeyValueStore mKeyValueStore;
+    private Bitmap quotesBitMap = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,19 +81,37 @@ public class LeadershipAndMotivation extends AppCompatActivity {
 
             }
         });
-
-       /* AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-        Intent myIntent = new Intent(LeadershipAndMotivation.this , AlaramReceiver.class);
-        mpendingIntent = PendingIntent.getBroadcast(LeadershipAndMotivation.this, 0, myIntent, 0);
-        Calendar calendar = Calendar.getInstance();
+        mKeyValueStore = KeyValueStore.getInstance(LeadershipAndMotivation.this.getApplicationContext(), "QuotesCounter");
+        mKeyValueStoreImage = KeyValueStore.getInstance(LeadershipAndMotivation.this.getApplicationContext(), "Routine");
 
 
-        calendar.set(Calendar.HOUR_OF_DAY, 07);
-        calendar.set(Calendar.MINUTE,20);
-        calendar.set(Calendar.SECOND, 00);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24 * 60 * 60 * 1000, mpendingIntent);
 
-*/
+        if (mKeyValueStore.getInt("counter", 0) == 0) {
+            mKeyValueStore.putInt("counter", 1);
+            Log.d("QuotesFragment", "count when first time " + mKeyValueStore.getInt("counter", 1));
+
+        }
+        Log.d("testQuotes", "counter value == " + String.valueOf(mKeyValueStore.getInt("counter", 1)));
+
+        if(!mKeyValueStoreImage.getBoolean("DailyRoutineCached",false)) {//If file is not present in Cache
+            SimpleTarget target2 = new SimpleTarget<Bitmap>() {
+                @Override
+                public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
+                    mKeyValueStoreImage.putBoolean("availableDailyRoutine",true);
+                }
+            };
+
+            Glide.with(this.getApplicationContext())
+                    .load("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg")
+                    .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .override(500, 400).priority(Priority.IMMEDIATE)
+                    .into(target2);
+
+
+        }else {//If File is present in cache
+            Log.d("testQuotes","Image already downloaded");
+        }
     }
 
     private static class PagerAdapter extends FragmentStatePagerAdapter {

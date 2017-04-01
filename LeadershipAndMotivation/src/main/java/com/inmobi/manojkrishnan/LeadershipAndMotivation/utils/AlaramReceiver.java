@@ -88,7 +88,7 @@ public class AlaramReceiver extends BroadcastReceiver {
             }*/
 
         Log.d("alarm","====Broadcast Received=====");
-        if ((intent.getExtras() != null) && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+        if ((intent.getExtras() != null) && intent.getAction()!=null && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
             Log.d("alarm","====Notifications scheduled after reboot of Device=====");
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
             Intent myIntent = new Intent(context.getApplicationContext(), AlaramReceiver.class);
@@ -97,8 +97,8 @@ public class AlaramReceiver extends BroadcastReceiver {
             mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY,07);
-            calendar.set(Calendar.MINUTE, 00);
+            calendar.set(Calendar.HOUR_OF_DAY,01);
+            calendar.set(Calendar.MINUTE, 10);
             calendar.set(Calendar.SECOND, 00);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);

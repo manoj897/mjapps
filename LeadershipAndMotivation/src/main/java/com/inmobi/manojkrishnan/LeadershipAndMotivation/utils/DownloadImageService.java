@@ -102,7 +102,7 @@ public class DownloadImageService extends IntentService {
             Bitmap bitmap = null;
                 if(mKeyValueStore.getBoolean("NextRoutineCached",false)) {
                     Log.d("testIntentService", "Image already downloaded");
-                    //Todo - File swap from nextDayRoutine to dailyRoutine
+                    //File swap from nextDayRoutine to dailyRoutine
                     Log.d("testIntentService", "swapping the image to dailyRoutine");
                     Bitmap dailyRoutineBitMap = null;
                     try {
@@ -110,6 +110,7 @@ public class DownloadImageService extends IntentService {
                         dailyRoutineBitMap = BitmapFactory.decodeFile(filepath.getAbsolutePath());
                         saveImageToInternalStorage(dailyRoutineBitMap, true);
                     } catch (Exception e) {
+                        registerNextRoutine();
                         e.printStackTrace();
                     }
                 }else {
@@ -135,74 +136,82 @@ public class DownloadImageService extends IntentService {
                 }
 
             if(mKeyValueStore.getBoolean("DailyRoutineCached",false)) {
-
                 Log.d("testIntentService", "Showing Notification");
-                if (Build.VERSION.SDK_INT < LOLLIPOP) {
-                    Context mcontext = ctxt.getApplicationContext();
-                    notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-                    Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
-                    pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-                    NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
-                    builder.setContentTitle("Quote for the Day");
-                    builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
-                    builder.setSmallIcon(R.drawable.leadershiplogo);
-                    builder.setContentIntent(pendingIntent);
-                    builder.setAutoCancel(true);
-
-                    notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-                    notificationManager.notify(NOTIFICATION_ID, builder.build());
-                    mKeyValueStore.putBoolean("availableDailyRoutine", true);
-                    mKeyValueStore.putBoolean("NextRoutineCached", false);
-
-                    Log.d("alarm", "====Notification sent=====");
-                } else {
-                    Context mcontext = ctxt.getApplicationContext();
-                    notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-                    Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
-                    pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-                    NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
-                    builder.setContentTitle("Quote for the Day");
-                    builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
-                    int color = 0xff123456;
-                    builder.setColor(color);
-                    builder.setSmallIcon(R.drawable.logonotification);
-                    builder.setContentIntent(pendingIntent);
-                    builder.setAutoCancel(true);
-
-                    notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
-                    notificationManager.notify(NOTIFICATION_ID, builder.build());
-                    mKeyValueStore.putBoolean("availableDailyRoutine", true);
-                    mKeyValueStore.putBoolean("NextRoutineCached", false);
-                    Log.d("alarm", "====Notification sent=====");
-                }
-
-                Log.d("alarm", "====Next Routine Notification registered=====");
-                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                Intent myIntent = new Intent(ctxt.getApplicationContext(), AlaramReceiver.class);
-                myIntent.putExtra("intentFromAlarmManager", true);
-                myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                mpendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, myIntent, 0);
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(System.currentTimeMillis());
-                calendar.set(Calendar.HOUR_OF_DAY,07);
-                calendar.set(Calendar.MINUTE, 00);
-                calendar.set(Calendar.SECOND, 00);
-                long dayDelay = 24*60*60*1000;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+calendar.getTimeInMillis(), mpendingIntent);
-                else
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+                buildNotification();
             }
 
         }
 
     }
 
+    private void buildNotification(){
+        if (Build.VERSION.SDK_INT < LOLLIPOP) {
+            Context mcontext = ctxt.getApplicationContext();
+            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+            Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+            pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
+            builder.setContentTitle("Quote for the Day");
+            builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
+            builder.setSmallIcon(R.drawable.leadershiplogo);
+            builder.setContentIntent(pendingIntent);
+            builder.setAutoCancel(true);
+
+            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+            notificationManager.notify(NOTIFICATION_ID, builder.build());
+            mKeyValueStore.putBoolean("availableDailyRoutine", true);
+            mKeyValueStore.putBoolean("NextRoutineCached", false);
+
+            Log.d("alarm", "====Notification sent=====");
+        } else {
+            Context mcontext = ctxt.getApplicationContext();
+            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+            Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+            pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
+            builder.setContentTitle("Quote for the Day");
+            builder.setContentText("GoodMorning!!").setLights(Color.GREEN, 300, 300);
+            int color = 0xff123456;
+            builder.setColor(color);
+            builder.setSmallIcon(R.drawable.logonotification);
+            builder.setContentIntent(pendingIntent);
+            builder.setAutoCancel(true);
+
+            notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
+            notificationManager.notify(NOTIFICATION_ID, builder.build());
+            mKeyValueStore.putBoolean("availableDailyRoutine", true);
+            mKeyValueStore.putBoolean("NextRoutineCached", false);
+            Log.d("alarm", "====Notification sent=====");
+        }
+        registerNextRoutine();
+    }
+
+    private void registerNextRoutine() {
+        Log.d("alarm", "====Next Routine Notification registered=====");
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent myIntent = new Intent(ctxt.getApplicationContext(), AlaramReceiver.class);
+        myIntent.putExtra("intentFromAlarmManager", true);
+        myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        mpendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, myIntent, 0);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY,07);
+        calendar.set(Calendar.MINUTE, 00);
+        calendar.set(Calendar.SECOND, 00);
+        long dayDelay = 24*60*60*1000;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+calendar.getTimeInMillis(), mpendingIntent);
+        else
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+    }
+
+
     public boolean saveImageToInternalStorage(Bitmap image,boolean dailyRoutine) {
         try {
             if(image == null ) {
                 mKeyValueStore.putBoolean("DailyRoutineCached", false);
                 mKeyValueStore.putBoolean("NextRoutineCached", false);
+                registerNextRoutine();
                 return  false;
             }
 
@@ -224,7 +233,7 @@ public class DownloadImageService extends IntentService {
             Log.e("saveToInternalStorage()", e.getMessage());
             mKeyValueStore.putBoolean("NextRoutineCached",false);
             mKeyValueStore.putBoolean("DailyRoutineCached",false);
-
+            registerNextRoutine();
             return false;
         }
     }
