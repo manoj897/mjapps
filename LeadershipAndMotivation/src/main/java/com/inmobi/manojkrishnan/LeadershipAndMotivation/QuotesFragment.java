@@ -1,12 +1,20 @@
 package com.inmobi.manojkrishnan.LeadershipAndMotivation;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaScannerConnection;
@@ -19,6 +27,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.text.Layout;
+import android.text.TextPaint;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -41,6 +51,11 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
+import com.github.amlcurran.showcaseview.ShowcaseDrawer;
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.SimpleShowcaseEventListener;
+import com.github.amlcurran.showcaseview.targets.ActionViewTarget;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkUtils;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.KeyValueStore;
 import com.squareup.picasso.Picasso;
@@ -65,10 +80,12 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
     private ImageView mShare;
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStoreImage;
+    private KeyValueStore mmKeyValueStoreShowCase;
     private ProgressBar mProgressBar;
     private Bitmap quotesBitMap = null;
     Uri uri;
     private ImageView mDownload;
+    private ShowcaseView showcaseViewdownload,showcaseView;
 
 
     @Override
@@ -83,6 +100,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
         mDownload = (ImageView) view.findViewById(R.id.download);
         mKeyValueStore = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "QuotesCounter");
         mKeyValueStoreImage = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "Routine");
+        mmKeyValueStoreShowCase = KeyValueStore.getInstance(QuotesFragment.this.getActivity().getApplicationContext(), "ShowCase");
         //ToDo - Show offline images for QuotesCounter
         if (!NetworkUtils.isNetworkAvailable(QuotesFragment.this.getActivity())) {
             if(!mKeyValueStoreImage.getBoolean("availableDailyRoutine",false)) {//If file is not present in Cache
@@ -105,6 +123,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
 
         if(!mKeyValueStoreImage.getBoolean("DailyRoutineCached",false)) {//If file is not present in Cache
+            Log.d("QuotesFragment","Downloading for first time");
             SimpleTarget target2 = new SimpleTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
@@ -122,6 +141,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
 
 
         }else {//If File is present in cache
+            Log.d("QuotesFragment","File is already downloaded");
             quotesBitMap = null;
             try {
                 File filePath = this.getContext().getFileStreamPath("dailyRoutine.png");
@@ -140,8 +160,58 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
         mShare.setVisibility(View.VISIBLE);
         mDownload.setVisibility(View.VISIBLE);
         mImageContainer.setScaleType(ImageView.ScaleType.FIT_XY);
-        mShare.setOnClickListener(this);
-        mDownload.setOnClickListener(this);
+
+
+
+        final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTextSize(getResources().getDimension(R.dimen.abc_text_size_medium_material));
+        paint.setColor(Color.WHITE);
+
+
+        final TextPaint title = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        title.setTextSize(getResources().getDimension(R.dimen.abc_text_size_headline_material));
+        title.setColor(Color.WHITE);
+
+
+        if(!mmKeyValueStoreShowCase.getBoolean("showCaseShown",false)) {//If created for first time
+            showcaseView = new ShowcaseView.Builder(getActivity())
+                    .withNewStyleShowcase()
+                    .setStyle(R.style.CustomShowcaseTheme2)
+                    .setTarget(new ViewTarget(mShare))
+                    .setContentTextPaint(paint)
+                    .setContentTitle("SHARE BUTTON")
+                    .setContentText("Click here to share the images")
+                    .setContentTitlePaint(title)
+                    .setShowcaseEventListener(new SimpleShowcaseEventListener() {
+                        @Override
+                        public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                            Log.d("QuotesFragment", "Show case view hidden");
+                            mShare.setOnClickListener(QuotesFragment.this);
+                            showcaseViewdownload = new ShowcaseView.Builder(getActivity())
+                                    .withNewStyleShowcase()
+                                    .setStyle(R.style.CustomShowcaseTheme2)
+                                    .setTarget(new ViewTarget(mDownload))
+                                    .setContentTextPaint(paint)
+                                    .setContentTitle("DOWNLOAD BUTTON")
+                                    .setContentText("Click here to Download the Quotes to save in Gallery")
+                                    .setContentTitlePaint(title)
+                                    .setShowcaseEventListener(new SimpleShowcaseEventListener() {
+                                        @Override
+                                        public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
+                                            Log.d("QuotesFragment", "Download show case view hidden");
+                                            mDownload.setOnClickListener(QuotesFragment.this);
+                                            mmKeyValueStoreShowCase.putBoolean("showCaseShown",true);
+                                        }
+                                    }).build();
+                            showcaseViewdownload.setDetailTextAlignment(Layout.Alignment.ALIGN_OPPOSITE);
+                            showcaseViewdownload.setTitleTextAlignment(Layout.Alignment.ALIGN_OPPOSITE);
+                        }
+                    }).build();
+            showcaseView.setDetailTextAlignment(Layout.Alignment.ALIGN_OPPOSITE);
+            showcaseView.setTitleTextAlignment(Layout.Alignment.ALIGN_OPPOSITE);
+
+
+        }
         return view;
 
     }
@@ -295,6 +365,9 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
             }
         }
     }
+
+
+
 
 
 }

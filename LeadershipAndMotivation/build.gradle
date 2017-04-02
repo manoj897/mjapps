@@ -37,5 +37,6 @@ dependencies {
     compile 'com.github.bumptech.glide:okhttp-integration:1.4.0@aar'
     compile 'com.squareup.okhttp:okhttp:2.2.0'
     compile 'com.facebook.stetho:stetho:1.4.2'
+    compile 'com.github.amlcurran.showcaseview:library:5.4.3'
 
 }

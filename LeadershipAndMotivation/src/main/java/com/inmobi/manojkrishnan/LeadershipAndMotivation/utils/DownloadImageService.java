@@ -149,6 +149,7 @@ public class DownloadImageService extends IntentService {
             Context mcontext = ctxt.getApplicationContext();
             notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
             Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+            mIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
             builder.setContentTitle("Quote for the Day");
@@ -167,6 +168,7 @@ public class DownloadImageService extends IntentService {
             Context mcontext = ctxt.getApplicationContext();
             notificationManager = (NotificationManager) mcontext.getSystemService(mcontext.NOTIFICATION_SERVICE);
             Intent mIntent = new Intent(mcontext, LeadershipAndMotivation.class);
+            mIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             pendingIntent = PendingIntent.getActivity(mcontext, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(mcontext);
             builder.setContentTitle("Quote for the Day");
@@ -191,18 +193,17 @@ public class DownloadImageService extends IntentService {
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent myIntent = new Intent(ctxt.getApplicationContext(), AlaramReceiver.class);
         myIntent.putExtra("intentFromAlarmManager", true);
-        myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mpendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, myIntent, 0);
-        Calendar calendar = Calendar.getInstance();
+        /*Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY,07);
-        calendar.set(Calendar.MINUTE, 00);
-        calendar.set(Calendar.SECOND, 00);
-        long dayDelay = 24*60*60*1000;
+        calendar.set(Calendar.HOUR_OF_DAY,11);
+        calendar.set(Calendar.MINUTE, 40);
+        calendar.set(Calendar.SECOND, 00);*/
+        long dayDelay = 15*60*1000;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+calendar.getTimeInMillis(), mpendingIntent);
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis(), mpendingIntent);
         else
-            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis(), mpendingIntent);
     }
 
 

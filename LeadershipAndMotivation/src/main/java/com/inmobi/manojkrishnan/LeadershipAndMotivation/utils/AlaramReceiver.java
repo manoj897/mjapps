@@ -93,12 +93,11 @@ public class AlaramReceiver extends BroadcastReceiver {
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
             Intent myIntent = new Intent(context.getApplicationContext(), AlaramReceiver.class);
             myIntent.putExtra("intentFromAlarmManager", true);
-            myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY,01);
-            calendar.set(Calendar.MINUTE, 10);
+            calendar.set(Calendar.HOUR_OF_DAY,11);
+            calendar.set(Calendar.MINUTE, 40);
             calendar.set(Calendar.SECOND, 00);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);

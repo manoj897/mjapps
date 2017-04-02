@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.facebook.stetho.Stetho;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkHandler;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.network.NetworkResponse;
@@ -32,6 +38,9 @@ import com.inmobi.manojkrishnan.LeadershipAndMotivation.utils.Setup;
 import com.squareup.picasso.Picasso;
 import com.ugurtekbas.fadingindicatorlibrary.FadingIndicator;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -48,6 +57,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStore4BlogsInit;
     private KeyValueStore mKeyValueStore4WallpaperInit;
+    private KeyValueStore mKeyValueStoreDailyRoutine;
+    private KeyValueStore mKeyValueStoreImage;
     private boolean mintialize=false;
     private boolean mBlogintialize=false;
     private boolean mWallpaperintialize=false;
@@ -97,8 +108,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             }
         }
 
-        mKeyValueStore = KeyValueStore.getInstance(this.getApplicationContext(), "DailyRoutine");
-        if (!mKeyValueStore.getBoolean("flag", false)) {
+        mKeyValueStoreDailyRoutine = KeyValueStore.getInstance(this.getApplicationContext(), "DailyRoutine");
+        if (!mKeyValueStoreDailyRoutine.getBoolean("flag", false)) {
             Log.d("MainActivity","DailyRoutine settings in progress");
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             Intent myIntent = new Intent(MainActivity.this, AlaramReceiver.class);
@@ -106,14 +117,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             mpendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY,07);
-            calendar.set(Calendar.MINUTE, 00);
+            calendar.set(Calendar.HOUR_OF_DAY,11);
+            calendar.set(Calendar.MINUTE, 40);
             calendar.set(Calendar.SECOND, 00);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
             else
                 alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
-            mKeyValueStore.putBoolean("flag",true);
+            mKeyValueStoreDailyRoutine.putBoolean("flag",true);
         }else{
             Log.d("MainActivity","DailyRoutine Notification set already");
         }
@@ -124,6 +135,39 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             mKeyValueStore.putInt("counter", 1);
             Log.d("MainActivity", "count when first time  " + mKeyValueStore.getInt("counter", 1));
 
+        }
+
+        mKeyValueStoreImage = KeyValueStore.getInstance(this.getApplicationContext(), "Routine");
+        if(!mKeyValueStoreImage.getBoolean("DailyRoutineCached",false)) {//If file is not present in Cache
+            SimpleTarget target2 = new SimpleTarget<Bitmap>() {
+                @Override
+                public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
+                    mKeyValueStoreImage.putBoolean("availableDailyRoutine",true);
+                    FileOutputStream fos = null;
+                    try {
+                        fos = MainActivity.this.openFileOutput("dailyRoutine.png", MainActivity.this.MODE_PRIVATE);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                        fos.close();
+                        mKeyValueStoreImage.putBoolean("DailyRoutineCached",true);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d("testQuotesFromMainActivity","Image downloaded");
+                }
+            };
+            Log.d("testQuotesFromMainActivity","Downloading Now");
+            Glide.with(this.getApplicationContext())
+                    .load("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg")
+                    .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .override(500, 400).priority(Priority.IMMEDIATE)
+                    .into(target2);
+
+
+        }else {//If File is present in cache
+            Log.d("testQuotesFromMainActivity","Image already downloaded");
         }
 
         //initialize Blogs

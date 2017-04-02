@@ -81,37 +81,7 @@ public class LeadershipAndMotivation extends AppCompatActivity {
 
             }
         });
-        mKeyValueStore = KeyValueStore.getInstance(LeadershipAndMotivation.this.getApplicationContext(), "QuotesCounter");
-        mKeyValueStoreImage = KeyValueStore.getInstance(LeadershipAndMotivation.this.getApplicationContext(), "Routine");
 
-
-
-        if (mKeyValueStore.getInt("counter", 0) == 0) {
-            mKeyValueStore.putInt("counter", 1);
-            Log.d("QuotesFragment", "count when first time " + mKeyValueStore.getInt("counter", 1));
-
-        }
-        Log.d("testQuotes", "counter value == " + String.valueOf(mKeyValueStore.getInt("counter", 1)));
-
-        if(!mKeyValueStoreImage.getBoolean("DailyRoutineCached",false)) {//If file is not present in Cache
-            SimpleTarget target2 = new SimpleTarget<Bitmap>() {
-                @Override
-                public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
-                    mKeyValueStoreImage.putBoolean("availableDailyRoutine",true);
-                }
-            };
-
-            Glide.with(this.getApplicationContext())
-                    .load("http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg")
-                    .asBitmap()
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .override(500, 400).priority(Priority.IMMEDIATE)
-                    .into(target2);
-
-
-        }else {//If File is present in cache
-            Log.d("testQuotes","Image already downloaded");
-        }
     }
 
     private static class PagerAdapter extends FragmentStatePagerAdapter {
