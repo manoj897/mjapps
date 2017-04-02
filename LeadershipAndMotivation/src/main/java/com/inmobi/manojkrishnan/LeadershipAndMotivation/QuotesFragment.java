@@ -211,7 +211,11 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
             showcaseView.setTitleTextAlignment(Layout.Alignment.ALIGN_OPPOSITE);
 
 
+        }else{
+            mDownload.setOnClickListener(QuotesFragment.this);
+            mShare.setOnClickListener(QuotesFragment.this);
         }
+
         return view;
 
     }
