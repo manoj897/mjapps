@@ -73,6 +73,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        mKeyValueStore = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "BlogImages");
         mKeyValueStore4BlogsInit = KeyValueStore.getInstance(BlogsFragment.this.getContext().getApplicationContext(), "BlogsInit");
         super.onActivityCreated(savedInstanceState);
         if (!NetworkUtils.isNetworkAvailable(BlogsFragment.this.getActivity())) {
@@ -81,6 +82,10 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
                         Toast.LENGTH_LONG).show();
                 return ;
             }
+        }
+
+        if(!mKeyValueStore.getBoolean("BlogImagesInit",false)) {
+            mKeyValueStore.putBoolean("blogImageDownloaded", true);
         }
 
         if(!mKeyValueStore4BlogsInit.getBoolean("init",false)){
@@ -136,7 +141,7 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
                 mRecycleView.setAdapter(mFeedAdapter);
                 clickListener = new mItemClickListener();
             }else {
-                Log.d("Blogs","Using Downloading Images======");
+                Log.d("Blogs","Using Downloaded Images======");
                 Bitmap thumbnail = null;
                 int i =0;
                 mBitMap = new ArrayList<>();

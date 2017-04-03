@@ -199,7 +199,7 @@ public class DownloadImageService extends IntentService {
         calendar.set(Calendar.HOUR_OF_DAY,11);
         calendar.set(Calendar.MINUTE, 40);
         calendar.set(Calendar.SECOND, 00);*/
-        long dayDelay = 15*60*1000;
+        long dayDelay = 24*60*60*1000;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis(), mpendingIntent);
         else

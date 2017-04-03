@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.system.Os;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.LeadershipAndMotivation;
 import com.inmobi.manojkrishnan.LeadershipAndMotivation.MainActivity;
@@ -96,13 +97,17 @@ public class AlaramReceiver extends BroadcastReceiver {
             mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY,11);
-            calendar.set(Calendar.MINUTE, 40);
+            calendar.set(Calendar.HOUR_OF_DAY,07);
+            calendar.set(Calendar.MINUTE, 00);
             calendar.set(Calendar.SECOND, 00);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
             else
                 alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);
+
+            Log.d("BroadCastReceiver","Intent from Action BOOT Completed");
+            Toast.makeText(context, "Intent from Action BOOT Completed", Toast.LENGTH_LONG).show();
+
         }
         mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
         mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "Routine");
