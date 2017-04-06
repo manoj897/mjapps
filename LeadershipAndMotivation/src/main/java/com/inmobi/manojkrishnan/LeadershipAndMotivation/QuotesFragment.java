@@ -236,7 +236,7 @@ public class QuotesFragment extends android.support.v4.app.Fragment implements V
     public void onClick(View v) {
         Log.d("testintent", "onCLick received");
         int i = v.getId();
-        Animation animFadein = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
+        Animation animFadein = AnimationUtils.loadAnimation(QuotesFragment.this.getContext().getApplicationContext(),R.anim.fade_in);
         v.startAnimation(animFadein);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!checkPermission()) {
