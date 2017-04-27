@@ -38,55 +38,6 @@ public class AlaramReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // TODO Auto-generated method stub
 
-       /* Intent service1 = new Intent(context, AlarmService.class);
-        context.startService(service1);*/
-        /*long when = System.currentTimeMillis();
-        NotificationManager notificationManager = (NotificationManager) context
-                .getSystemService(Context.NOTIFICATION_SERVICE);
-
-        Intent notificationIntent = new Intent(context, LeadershipAndMotivation.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
-                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-
-        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-        NotificationCompat.Builder mNotifyBuilder = new NotificationCompat.Builder(
-                context).setSmallIcon(R.drawable.share)
-                .setContentTitle("Alaram Fired")
-                .setContentText("Events To be Performed").setSound(alarmSound)
-                .setAutoCancel(true).setWhen(when)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000});
-        notificationManager.notify(Integer.parseInt(String.valueOf(System.currentTimeMillis())), mNotifyBuilder.build());
-*/
-
-
-/*
-            if( (intent.getExtras() != null) && (intent.getExtras().get("intentFromAlarmManager") != null)){
-                //if image downloaded then
-                //  show Notification
-                //  Reset the CacheImageforSecondDay
-                //else
-                //  increment the counter
-                //  Download image
-                //  and Show Notification
-                //  Reset the CacheImageforSecondDay
-                //put in preference that dailyRoutine trigerred
-            }else{
-
-                //  If (Connected)
-                //     if image downloaded then
-                //        do nothing
-                //      else
-                //          Increment the counter
-                //          Download the image
-                //          set the CacheImageforSecondDay
-                //  else
-                //      Do Nothing
-            }*/
 
         Log.d("alarm","====Broadcast Received=====");
         if ((intent.getExtras() != null) && intent.getAction()!=null && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
@@ -96,7 +47,6 @@ public class AlaramReceiver extends BroadcastReceiver {
             myIntent.putExtra("intentFromAlarmManager", true);
             mpendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(System.currentTimeMillis());
             calendar.set(Calendar.HOUR_OF_DAY,07);
             calendar.set(Calendar.MINUTE, 00);
             calendar.set(Calendar.SECOND, 00);
@@ -109,8 +59,11 @@ public class AlaramReceiver extends BroadcastReceiver {
             Toast.makeText(context, "Intent from Action BOOT Completed", Toast.LENGTH_LONG).show();
 
         }
+
+
         mKeyValueStore = KeyValueStore.getInstance(context.getApplicationContext(), "QuotesCounter");
         mKeyValueStoreBitMap = KeyValueStore.getInstance(context.getApplicationContext(), "Routine");
+
 
         Intent msgIntent = new Intent(context, DownloadImageService.class);
         if( (intent.getExtras() != null) && (intent.getExtras().get("intentFromAlarmManager") != null)) {

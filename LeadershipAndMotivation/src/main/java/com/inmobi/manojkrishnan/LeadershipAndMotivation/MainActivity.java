@@ -116,9 +116,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             myIntent.putExtra("intentFromAlarmManager", true);
             mpendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, myIntent, 0);
             Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY,11);
-            calendar.set(Calendar.MINUTE, 40);
+            calendar.set(Calendar.HOUR_OF_DAY,07);
+            calendar.set(Calendar.MINUTE, 00);
             calendar.set(Calendar.SECOND, 00);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), mpendingIntent);

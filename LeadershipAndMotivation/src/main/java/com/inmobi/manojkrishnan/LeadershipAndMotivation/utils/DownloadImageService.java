@@ -194,14 +194,31 @@ public class DownloadImageService extends IntentService {
         Intent myIntent = new Intent(ctxt.getApplicationContext(), AlaramReceiver.class);
         myIntent.putExtra("intentFromAlarmManager", true);
         mpendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, myIntent, 0);
-        /*Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY,11);
-        calendar.set(Calendar.MINUTE, 40);
-        calendar.set(Calendar.SECOND, 00);*/
         long dayDelay = 24*60*60*1000;
+
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY,07);
+        calendar.set(Calendar.MINUTE, 00);
+        calendar.set(Calendar.SECOND, 00);
+        Long nextRoutineInMillis = calendar.getTimeInMillis();
+
+
+        Log.d("alarm", "===nextRoutineInMillis====="+nextRoutineInMillis);
+
+        long currentTimeInMillis=System.currentTimeMillis();
+        Long adjustDelay=0L;
+        Log.d("alarm", "===currentTimeInMillis====="+currentTimeInMillis);
+
+        if(currentTimeInMillis > nextRoutineInMillis){
+             adjustDelay = currentTimeInMillis - nextRoutineInMillis;
+            Log.d("alarm", "====DelayAdjusted====="+adjustDelay);
+        }else {
+            Log.d("alarm", "======No Delay=====");
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis(), mpendingIntent);
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis()-adjustDelay, mpendingIntent);
         else
             alarmManager.set(AlarmManager.RTC_WAKEUP, dayDelay+System.currentTimeMillis(), mpendingIntent);
     }

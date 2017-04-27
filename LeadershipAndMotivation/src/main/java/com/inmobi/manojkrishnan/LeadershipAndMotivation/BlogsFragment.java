@@ -162,9 +162,6 @@ public class BlogsFragment  extends android.support.v4.app.Fragment {
                 mRecycleView.setAdapter(mFeedAdapter);
                 clickListener = new mItemClickListener();
             }
-
-
-
             //Start downloading images
         }
 
