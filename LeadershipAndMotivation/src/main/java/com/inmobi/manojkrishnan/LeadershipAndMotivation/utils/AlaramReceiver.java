@@ -81,7 +81,7 @@ public class AlaramReceiver extends BroadcastReceiver {
             msgIntent.putExtra("DailyRoutine","true");
             msgIntent.putExtra("imageUrl", "http://motivationpics.s3-ap-southeast-1.amazonaws.com/" + mKeyValueStore.getInt("counter", 1) + ".jpg");
             context.startService(msgIntent);
-        }else if((intent.getExtras() != null) && intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE")){
+        }else if((intent.getExtras() != null) && intent.getAction()!=null && intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE")){
             Log.d("BroadCastReceiver","Connectivity change");
             boolean isServiceEnabled = false;
             ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);

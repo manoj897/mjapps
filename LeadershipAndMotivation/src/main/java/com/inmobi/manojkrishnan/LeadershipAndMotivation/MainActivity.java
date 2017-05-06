@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
@@ -54,6 +55,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private ImageView img;
     IntroductionPagerAdapter mIntroductionPagerAdapter;
     PendingIntent mpendingIntent;
+    private KeyValueStore mKeyValueStoreAppVersion;
     private KeyValueStore mKeyValueStore;
     private KeyValueStore mKeyValueStore4BlogsInit;
     private KeyValueStore mKeyValueStore4WallpaperInit;
@@ -61,7 +63,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private KeyValueStore mKeyValueStoreImage;
     private boolean mintialize=false;
     private boolean mBlogintialize=false;
-    private boolean mWallpaperintialize=false;
+    private KeyValueStore mKeyValueStoreBlogImages;
+    private KeyValueStore mKeyValueStoreShowCase;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +85,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             }
         });*/
 
+
+
         ContextHolder.init(this);
 
 
@@ -96,6 +102,33 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         Button btn = (Button)findViewById(R.id.startOffTitle);
         btn.setOnClickListener(this);
+
+        mKeyValueStoreAppVersion = KeyValueStore.getInstance(this.getApplicationContext(),"AppVersion");
+        String storedVersion = mKeyValueStoreAppVersion.getString("version",null);
+        String currentVersion = null;
+        try {
+             currentVersion = String.valueOf(getPackageManager().getPackageInfo(getPackageName(), 0).versionCode);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if( (storedVersion == null) || !(storedVersion.equalsIgnoreCase(currentVersion))){
+            mKeyValueStoreAppVersion.putString("version",currentVersion);
+            mKeyValueStore4BlogsInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "BlogsInit");
+            mKeyValueStoreDailyRoutine = KeyValueStore.getInstance(this.getApplicationContext(), "DailyRoutine");
+            mKeyValueStore = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "QuotesCounter");
+            mKeyValueStoreImage = KeyValueStore.getInstance(this.getApplicationContext(), "Routine");
+            mKeyValueStore4WallpaperInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "WallpaperInit");
+            mKeyValueStoreBlogImages = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "BlogImages");
+            mKeyValueStoreShowCase = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "ShowCase");
+
+            mKeyValueStore4WallpaperInit.clearAll();
+            mKeyValueStoreShowCase.clearAll();
+            mKeyValueStoreImage.clearAll();
+            mKeyValueStoreDailyRoutine.clearAll();
+            Log.d("MainActivity", "old version clearing the preferences");
+        }
+
 
 
 
@@ -204,7 +237,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         }
         //Initialize Wallpaper
-        mKeyValueStore4WallpaperInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "WallpaperInit");
+      /*  mKeyValueStore4WallpaperInit = KeyValueStore.getInstance(MainActivity.this.getApplicationContext(), "WallpaperInit");
         if(mKeyValueStore4WallpaperInit.getBoolean("init",false) &&
                 (null != mKeyValueStore4WallpaperInit.getString("wallpaperGrammar",null)))
             mWallpaperintialize = true;
@@ -226,7 +259,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 }
             });
             WallpaperGrammar.start();
-        }
+        }*/
         mintialize = true;
     }
 
@@ -256,13 +289,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     @Override
     public void onClick(View v) {
         if (!NetworkUtils.isNetworkAvailable(this)) {
-            if(!mBlogintialize && !mWallpaperintialize) {
+            if(!mBlogintialize) {
                 Toast.makeText(MainActivity.this, "Please exit and connect to network to get started",
                         Toast.LENGTH_SHORT).show();
                 return;
             }
         }
-        if(mintialize && mBlogintialize && mWallpaperintialize) {
+        if(mintialize && mBlogintialize ) {
             Intent inst = new Intent(this, LeadershipAndMotivation.class);
             startActivity(inst);
         }else
